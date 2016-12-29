@@ -1,6 +1,7 @@
 package com.masa34.nk225analyzer.UI;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -121,7 +122,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 return true;
 
             case R.id.action_settings:
-                Toast.makeText(this, "設定", Toast.LENGTH_SHORT).show();
+                Intent intent = new android.content.Intent(this, SettingsActivity.class);
+                startActivity(intent);
                 return true;
 
             case R.id.action_db_init:

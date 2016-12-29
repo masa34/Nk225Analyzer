@@ -7,4 +7,6 @@
     <string name="t1_url">http://k-db.com/statistics/T1/</string>
     <string name="nodata_nessage">データがありません。\nダウンロードしてください。</string>
     <string name="banner_ad_unit_id">ca-app-pub-0365443143303373/8533064876</string>
+    <string name="title_activity_settings">設定</string>
+    <string name="setting_version">バージョン番号</string>
 </resources>
