@@ -2,8 +2,10 @@ package com.masa34.nk225analyzer.UI;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.PagerTabStrip;
@@ -39,6 +41,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     private AdView adView;
 
+    private boolean isStartup = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,10 +70,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // 非同期処理
         getSupportLoaderManager().initLoader(0, null, this);
+
+        isStartup = true;
     }
 
     @Override
-    public void onDestroy() {
+    protected void onDestroy() {
         Log.d(TAG, "onDestroy");
 
         adView.destroy();
@@ -77,23 +83,44 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     @Override
-    public void onResume() {
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        Log.d(TAG,"onRestoreInstanceState");
+
+        isStartup = false;
+    }
+
+    @Override
+    protected void onResume() {
         super.onResume();
         Log.d(TAG, "onResume");
+
+        adView.resume();
 
         if (downloader != null && downloader.isInProcess()) {
             // 新しいアクティビティへの参照を持つCallbackを設定してあげる
             downloader.setCallBack(new DownloaderCallBack(this));
 
             showProgressDialog(this);
+
+            return;
         }
 
-        adView.resume();
+        if (isStartup) {
+            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+
+            if (preference.getBoolean("auto_download", false)) {
+                downloader = new Nk225Downloader(new AutoDownloaderCallBack(MainActivity.this));
+                downloader.execute();
+            }
+        }
     }
 
     @Override
-    public void onPause() {
+    protected void onPause() {
         Log.d(TAG, "onPause");
+
+        isStartup = false;
 
         if (downloader != null && downloader.isInProcess()) {
             // アクティビティが消える前にダイアログを終了させる
@@ -233,6 +260,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private static Nk225Downloader downloader;
 
     private class DownloaderCallBack implements Nk225Downloader.DownloadCallBack {
+
+        private final String TAG = "DownloaderCallBack";
+
         private Context context;
 
         public DownloaderCallBack(Context context) {
@@ -252,6 +282,36 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             dismissProgressDialog();
 
             Toast.makeText(MainActivity.this, "画面を下に引っ張り、表示を更新して下さい", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private class AutoDownloaderCallBack implements Nk225Downloader.DownloadCallBack {
+
+        private final String TAG = "AutoDownloaderCallBack";
+
+        private MainActivity activity;
+
+        public AutoDownloaderCallBack(MainActivity activity) {
+            Log.d(TAG, "AutoDownloaderCallBack");
+            this.activity = activity;
+        }
+
+        @Override
+        public void onPreDownload() {
+            Log.d(TAG, "onPreDownload");
+            showProgressDialog(activity);
+        }
+
+        @Override
+        public void onPostDownload(boolean result) {
+            Log.d(TAG, "onPostDownload");
+            dismissProgressDialog();
+
+            // 非同期処理
+            getSupportLoaderManager().restartLoader(0, null, activity);
+
+            // 更新が終了したらインジケータ非表示
+            swipeRefreshLayout.setRefreshing(false);
         }
     }
 }
