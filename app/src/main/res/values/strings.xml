@@ -8,5 +8,7 @@
     <string name="nodata_nessage">データがありません。\nダウンロードしてください。</string>
     <string name="banner_ad_unit_id">ca-app-pub-0365443143303373/8533064876</string>
     <string name="title_activity_settings">設定</string>
+    <string name="setting_auto_download">自動ダウンロード</string>
     <string name="setting_version">バージョン番号</string>
+    <string name="summary_auto_download">起動時に株価情報を自動でダウンロードします</string>
 </resources>
