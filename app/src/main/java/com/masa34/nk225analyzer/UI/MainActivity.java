@@ -24,7 +24,7 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.masa34.nk225analyzer.R;
 import com.masa34.nk225analyzer.Stock.Nk225Entity;
-import com.masa34.nk225analyzer.Task.Nk225Downloader;
+import com.masa34.nk225analyzer.Task.AbstractNk225DownloadProcess;
 import com.masa34.nk225analyzer.Task.Nk225ListReader;
 
 import java.util.List;
@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private AdView adView;
 
     private boolean isStartup = false;
+    private boolean isVisible = false;
+    private boolean isDelayReflesh = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,11 +74,14 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         getSupportLoaderManager().initLoader(0, null, this);
 
         isStartup = true;
+        isDelayReflesh = false;
     }
 
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
+
+        isDelayReflesh = false;
 
         adView.destroy();
         super.onDestroy();
@@ -95,24 +100,29 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         super.onResume();
         Log.d(TAG, "onResume");
 
+        isVisible = true;
+
         adView.resume();
 
         if (downloader != null && downloader.isInProcess()) {
-            // 新しいアクティビティへの参照を持つCallbackを設定してあげる
-            downloader.setCallBack(new DownloaderCallBack(this));
-
             showProgressDialog(this);
-
             return;
         }
 
+        // 自動ダウンロード
         if (isStartup) {
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
 
             if (preference.getBoolean("auto_download", false)) {
-                downloader = new Nk225Downloader(new AutoDownloaderCallBack(MainActivity.this));
+                downloader = new AutoNk225DownloadProcess();
                 downloader.execute();
             }
+        }
+
+        if (isDelayReflesh) {
+            isDelayReflesh = false;
+
+            onRefresh();
         }
     }
 
@@ -126,6 +136,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             // アクティビティが消える前にダイアログを終了させる
             dismissProgressDialog();
         }
+
+        isVisible = false;
 
         adView.pause();
         super.onPause();
@@ -144,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         switch (item.getItemId()) {
             case R.id.action_download:
-                downloader = new Nk225Downloader(new DownloaderCallBack(MainActivity.this));
+                downloader = new ManualNk225DownloadProcess();
                 downloader.execute();
                 return true;
 
@@ -203,7 +215,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                     @Override
                     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
                     }
 
                     @Override
@@ -257,61 +268,39 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         progressDialog = null;
     }
 
-    private static Nk225Downloader downloader;
+    private static AbstractNk225DownloadProcess downloader = null;
 
-    private class DownloaderCallBack implements Nk225Downloader.DownloadCallBack {
+    private class ManualNk225DownloadProcess extends AbstractNk225DownloadProcess {
 
-        private final String TAG = "DownloaderCallBack";
-
-        private Context context;
-
-        public DownloaderCallBack(Context context) {
-            Log.d(TAG, "DownloaderCallBack");
-            this.context = context;
+        @Override
+        protected void onPreDownloadProcess() {
+            showProgressDialog(MainActivity.this);
         }
 
         @Override
-        public void onPreDownload() {
-            Log.d(TAG, "onPreDownload");
-            showProgressDialog(context);
-        }
-
-        @Override
-        public void onPostDownload(boolean result) {
-            Log.d(TAG, "onPostDownload");
+        protected void onPostDownloadProcess() {
             dismissProgressDialog();
 
             Toast.makeText(MainActivity.this, "画面を下に引っ張り、表示を更新して下さい", Toast.LENGTH_LONG).show();
         }
     }
 
-    private class AutoDownloaderCallBack implements Nk225Downloader.DownloadCallBack {
+    private class AutoNk225DownloadProcess extends AbstractNk225DownloadProcess {
 
-        private final String TAG = "AutoDownloaderCallBack";
-
-        private MainActivity activity;
-
-        public AutoDownloaderCallBack(MainActivity activity) {
-            Log.d(TAG, "AutoDownloaderCallBack");
-            this.activity = activity;
+        @Override
+        protected void onPreDownloadProcess() {
+            showProgressDialog(MainActivity.this);
         }
 
         @Override
-        public void onPreDownload() {
-            Log.d(TAG, "onPreDownload");
-            showProgressDialog(activity);
-        }
-
-        @Override
-        public void onPostDownload(boolean result) {
-            Log.d(TAG, "onPostDownload");
+        protected void onPostDownloadProcess() {
             dismissProgressDialog();
 
-            // 非同期処理
-            getSupportLoaderManager().restartLoader(0, null, activity);
-
-            // 更新が終了したらインジケータ非表示
-            swipeRefreshLayout.setRefreshing(false);
+            if (isVisible) {
+                onRefresh();
+            } else {
+                isDelayReflesh = true;
+            }
         }
     }
 }
