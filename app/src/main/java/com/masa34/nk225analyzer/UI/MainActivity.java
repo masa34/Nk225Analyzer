@@ -45,6 +45,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private boolean isVisible = false;
     private boolean isDelayReflesh = false;
 
+    private boolean isAutoDownload() {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+
+        return preference.getBoolean("auto_download", false);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,9 +75,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         adView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
-
-        // 非同期処理
-        getSupportLoaderManager().initLoader(0, null, this);
 
         isStartup = true;
         isDelayReflesh = false;
@@ -109,13 +112,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             return;
         }
 
-        // 自動ダウンロード
         if (isStartup) {
-            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
-
-            if (preference.getBoolean("auto_download", false)) {
+            if (isAutoDownload()) {
+                // 自動ダウンロード
                 downloader = new AutoNk225DownloadProcess();
                 downloader.execute();
+            } else {
+                getSupportLoaderManager().initLoader(0, null, this);
             }
         }
 
