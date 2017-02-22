@@ -18,6 +18,8 @@ public class Candlestick extends RealmObject {
     private double highPrice;
     private double lowPrice;
 
+    private boolean marketClosing;
+
     public long getId() {
         return id;
     }
@@ -64,5 +66,13 @@ public class Candlestick extends RealmObject {
 
     public void setLowPrice(double lowPrice) {
         this.lowPrice = lowPrice;
+    }
+
+    public boolean getMarketClosing() {
+        return marketClosing;
+    }
+
+    public void setMarketClosing(boolean marketClosing) {
+        this.marketClosing = marketClosing;
     }
 }

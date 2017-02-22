@@ -5,6 +5,9 @@ import android.graphics.Color;
 import com.masa34.nk225analyzer.R;
 import com.masa34.nk225analyzer.Stock.Nk225Entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ComprehensiveEvaluationCard extends Nk225CardBase {
 
     public ComprehensiveEvaluationCard(Nk225Entity entity) {
@@ -83,13 +86,23 @@ public class ComprehensiveEvaluationCard extends Nk225CardBase {
     }
 
     private double calcScore() {
-        double bollingerBandScore = calcBollingerBandScore(entity);
-        double estrangementRateScore = calcEstrangementRateScore(entity);
-        double losersRatioScore = calcLosersRatioScore(entity);
-        double psychologicalScore = calcPsychologicalScore(entity);
-        double rsiScore = calcRsiScore(entity);
-        double rciScore = calcRciScore(entity);
+        List<Double> scores = new ArrayList<>();
 
-        return (bollingerBandScore + estrangementRateScore + losersRatioScore + psychologicalScore + rsiScore  + rciScore) / 6;
+        scores.add(calcBollingerBandScore(entity));
+        scores.add(calcEstrangementRateScore(entity));
+        scores.add(calcPsychologicalScore(entity));
+        scores.add(calcRsiScore(entity));
+        scores.add(calcRciScore(entity));
+
+        if (entity.getMarketClosing()) {
+            scores.add(calcLosersRatioScore(entity));
+        }
+
+        double totalScore = 0.0;
+        for (Double score : scores) {
+            totalScore += score;
+        }
+
+        return totalScore / scores.size();
     }
 }

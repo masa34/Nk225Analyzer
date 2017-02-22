@@ -1,13 +1,13 @@
 package com.masa34.nk225analyzer.Util.Validator;
 
 public class CandlestickValidator {
-    public static boolean isValid(String[] values) {
+    public static boolean isValid(String[] values, String dateFormat) {
 
         if (values.length < 5) {
             return false;
         }
 
-        if (!DateValidator.isValid(values[0], "yyyy-MM-dd")) {
+        if (!DateValidator.isValid(values[0], dateFormat)) {
             return false;
         }
 

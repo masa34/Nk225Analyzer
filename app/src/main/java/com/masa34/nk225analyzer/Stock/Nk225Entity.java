@@ -41,6 +41,8 @@ public class Nk225Entity extends RealmObject implements Serializable {
     // サイコロ
     private double psychological;
 
+    private boolean marketClosing;
+
     public long getId() {
         return id;
     }
@@ -127,5 +129,13 @@ public class Nk225Entity extends RealmObject implements Serializable {
 
     public void setPsychological(double psychological) {
         this.psychological = psychological;
+    }
+
+    public boolean getMarketClosing() {
+        return marketClosing;
+    }
+
+    public void setMarketClosing(boolean marketClosing) {
+        this.marketClosing = marketClosing;
     }
 }
