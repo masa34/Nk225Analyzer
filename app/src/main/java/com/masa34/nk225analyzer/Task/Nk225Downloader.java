@@ -269,7 +269,6 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
             try {
                 if (realm.where(Candlestick.class).equalTo("date", toDate).count() == 0) {
-
                     HttpURLConnection urlConnection = null;
                     InputStream inputStream = null;
 
@@ -304,14 +303,14 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                             values = line.split("=", 2);
                             if (values.length == 2) {
                                 header.put(values[0], values[1]);
-                                break;
+                                continue;
                             }
 
                             // データ部
                             values = line.split(",", 0);
                             if (values.length == 5) {
 
-                                String dateFormat = "yyyy/MM/dd HH:mm";
+                                long utime = 0;
 
                                 Pattern p = Pattern.compile("^a[0-9]*$");
                                 Matcher m = p.matcher(values[0]);
@@ -323,36 +322,33 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                                     }
 
                                     // データ部1行目
-                                    try {
-                                        baseDate = Long.parseLong(values[0].substring(1));
-                                        long msec = baseDate * 1000L;
-                                        values[0] = new SimpleDateFormat(dateFormat).format(new Date(msec));
-                                    } catch (NumberFormatException e) {
-                                        Log.e(TAG, e.toString());
-                                        break;
-                                    }
+                                    baseDate = Long.parseLong(values[0].substring(1));
+                                    utime = baseDate;
                                 } else {
                                     // データ部2行目以降
-                                    try {
-                                        long msec = (baseDate + Long.parseLong(values[0]) * Long.parseLong(header.get("INTERVAL"))) * 1000L;
-                                        values[0] = new SimpleDateFormat(dateFormat).format(new Date(msec));
-                                    } catch (NumberFormatException e) {
-                                        Log.e(TAG, e.toString());
-                                        break;
-                                    }
+                                    utime = baseDate + Long.parseLong(values[0]) * Long.parseLong(header.get("INTERVAL"));
+                                }
+
+                                // 配列の最初の要素を日付形式に変換
+                                String dateFormat = "yyyy/MM/dd HH:mm";
+                                try {
+                                    values[0] = new SimpleDateFormat(dateFormat).format(new Date(utime * 1000L));
+                                } catch (NumberFormatException e) {
+                                    Log.e(TAG, e.toString());
+                                    break;
                                 }
 
                                 if (CandlestickValidator.isValid(values, dateFormat)) {
                                     try {
                                         Date date = DateUtils.convertToDate(values[0], dateFormat);
                                         if (date.compareTo(toDate) >= 0) {
+                                            // 5分足1本分の株価情報
                                             Candlestick candlestick = new Candlestick();
                                             candlestick.setDate(date);
                                             candlestick.setOpeningPrice(Float.parseFloat(values[1]));
                                             candlestick.setHighPrice(Float.parseFloat(values[2]));
                                             candlestick.setLowPrice(Float.parseFloat(values[3]));
                                             candlestick.setClosingPrice(Float.parseFloat(values[4]));
-                                            candlestick.setMarketClosing(false);
 
                                             candlesticks.add(candlestick);
                                         }
@@ -369,6 +365,7 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
                             // 1時間足を合成して日足に変換
                             Candlestick candlestick = StockUtils.MergeChart(candlesticks);
+                            candlestick.setMarketClosing(false);
 
                             long nextId = 1;
                             Number maxId = realm.where(Candlestick.class).max("id");
