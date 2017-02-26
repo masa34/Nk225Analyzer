@@ -14,15 +14,20 @@ public class LosersRatioCard extends Nk225CardBase {
     }
 
     public void bindViewHolder(ViewHolder holder) {
-        double losersRatio = entity.getLosersRatio();
-
         ViewHolder1 holder1 = (ViewHolder1)holder;
         holder1.setTitle("騰落レシオ");
-        holder1.setValue(String.format("%+.2f", losersRatio));
-        if (losersRatio >= 130.0) {
-            holder1.setValueColor(Color.RED);
-        } else if (losersRatio <= 70.0) {
-            holder1.setValueColor(Color.BLUE);
+        if (entity.getMarketClosing()) {
+            double losersRatio = entity.getLosersRatio();
+
+            holder1.setValue(String.format("%+.2f", losersRatio));
+            if (losersRatio >= 130.0) {
+                holder1.setValueColor(Color.RED);
+            } else if (losersRatio <= 70.0) {
+                holder1.setValueColor(Color.BLUE);
+            }
+        } else {
+            // 騰落レシオは引け後でないと計算できない（※仕様）
+            holder1.setValue("-");
         }
     }
 }

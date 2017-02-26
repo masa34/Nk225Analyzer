@@ -16,12 +16,12 @@ public class DateUtils {
     private DateUtils() {
     }
 
-    public static Date convertToDate(String dateString) throws ParseException {
+    public static Date convertToDate(String date, String format) throws ParseException {
         Log.d(TAG, "convertToDate");
 
         try {
-            SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
-            return fmt.parse(dateString);
+            SimpleDateFormat fmt = new SimpleDateFormat(format);
+            return fmt.parse(date);
         } catch (ParseException e) {
             Log.e(TAG, e.toString());
             throw e;
