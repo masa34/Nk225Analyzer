@@ -1,6 +1,8 @@
 package com.masa34.nk225analyzer.Stock;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
@@ -12,6 +14,56 @@ public class StockUtils {
     // コンストラクタ
     // インスタンス化禁止
     private StockUtils() {
+    }
+
+    public static Candlestick MergeChart(List<Candlestick> candlesticks) {
+
+        if (candlesticks.size() > 0) {
+
+            // 日時の昇順にソート
+            Collections.sort(candlesticks, new Comparator<Candlestick>() {
+                public int compare(Candlestick candlestick1, Candlestick candlestick2) {
+                    return candlestick1.getDate().compareTo(candlestick2.getDate());
+                }
+            });
+
+            int first = 0;
+            int last = candlesticks.size() - 1;
+            Candlestick candlestick = new Candlestick();
+            candlestick.setDate(candlesticks.get(last).getDate());
+            candlestick.setOpeningPrice(candlesticks.get(first).getOpeningPrice());
+            candlestick.setClosingPrice(candlesticks.get(last).getClosingPrice());
+            candlestick.setHighPrice(Collections.max(candlesticks, new Comparator<Candlestick>() {
+                public int compare(Candlestick candlestick1, Candlestick candlestick2) {
+                    double price1 = candlestick1.getHighPrice();
+                    double price2 = candlestick2.getHighPrice();
+                    if (price1 > price2) {
+                        return 1;
+                    } else if (price1 < price2) {
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                }
+            }).getHighPrice());
+            candlestick.setLowPrice(Collections.min(candlesticks, new Comparator<Candlestick>() {
+                public int compare(Candlestick candlestick1, Candlestick candlestick2) {
+                    double price1 = candlestick1.getLowPrice();
+                    double price2 = candlestick2.getLowPrice();
+                    if (price1 > price2) {
+                        return 1;
+                    } else if (price1 < price2) {
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                }
+            }).getLowPrice());
+
+            return candlestick;
+        }
+
+        return null;
     }
 
     // 日経平均株価（終値）

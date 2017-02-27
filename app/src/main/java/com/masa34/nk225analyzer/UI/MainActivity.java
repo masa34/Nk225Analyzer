@@ -29,8 +29,14 @@ import com.masa34.nk225analyzer.Task.Nk225ListReader;
 
 import java.util.List;
 
+import io.realm.DynamicRealm;
+import io.realm.DynamicRealmObject;
+import io.realm.FieldAttribute;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
+import io.realm.RealmMigration;
+import io.realm.RealmObjectSchema;
+import io.realm.RealmSchema;
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, LoaderManager.LoaderCallbacks<List<Nk225Entity>> {
 
@@ -58,7 +64,40 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         setContentView(R.layout.activity_main);
 
         // Realm初期化
-        Realm.setDefaultConfiguration(new RealmConfiguration.Builder(this).build());
+        Realm.setDefaultConfiguration(new RealmConfiguration.Builder(this)
+                .schemaVersion(1)
+                .migration(new RealmMigration() {
+                    @Override
+                    public void migrate(final DynamicRealm realm, long oldVersion, long newVersion) {
+                        RealmSchema schema = realm.getSchema();
+
+                        if (oldVersion == 0) {
+
+                            // CandlestickテーブルにmarketClosingカラムを追加
+                            schema.get("Candlestick")
+                                    .addField("marketClosing", boolean.class, FieldAttribute.REQUIRED)
+                                    .transform(new RealmObjectSchema.Function() {
+                                        @Override
+                                        public void apply(DynamicRealmObject obj) {
+                                            obj.setBoolean("marketClosing", true);
+                                        }
+                                });
+
+                            // Nk225EntityテーブルにmarketClosingカラムを追加
+                            schema.get("Nk225Entity")
+                                    .addField("marketClosing", boolean.class, FieldAttribute.REQUIRED)
+                                    .transform(new RealmObjectSchema.Function() {
+                                        @Override
+                                        public void apply(DynamicRealmObject obj) {
+                                            obj.setBoolean("marketClosing", true);
+                                        }
+                                    });
+
+                            oldVersion++;
+                        }
+                    }
+                })
+                .build());
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
