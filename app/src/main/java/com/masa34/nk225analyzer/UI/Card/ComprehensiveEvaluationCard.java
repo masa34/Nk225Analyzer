@@ -5,6 +5,7 @@ import android.graphics.Color;
 import com.masa34.nk225analyzer.R;
 import com.masa34.nk225analyzer.Stock.Nk225Entity;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +49,15 @@ public class ComprehensiveEvaluationCard extends Nk225CardBase {
             evaluationHholder.setEvaluationColor(Color.parseColor("#000000"));
             evaluationHholder.setEvaluationBackground(R.drawable.style_normal);
         }
+
+        String updated = "";
+        if (!entity.getMarketClosing()) {
+            try {
+                updated = new SimpleDateFormat("HH:mm更新").format(entity.getDate());
+            } catch (NumberFormatException e) {
+            }
+        }
+        evaluationHholder.setUpdated(updated);
     }
 
     private double calcBollingerBandScore(Nk225Entity entity) {
