@@ -97,16 +97,12 @@ public class ComprehensiveEvaluationCard extends Nk225CardBase {
 
     private double calcScore() {
         List<Double> scores = new ArrayList<>();
-
         scores.add(calcBollingerBandScore(entity));
         scores.add(calcEstrangementRateScore(entity));
         scores.add(calcPsychologicalScore(entity));
         scores.add(calcRsiScore(entity));
         scores.add(calcRciScore(entity));
-
-        if (entity.getMarketClosing()) {
-            scores.add(calcLosersRatioScore(entity));
-        }
+        scores.add(calcLosersRatioScore(entity));
 
         double totalScore = 0.0;
         for (Double score : scores) {

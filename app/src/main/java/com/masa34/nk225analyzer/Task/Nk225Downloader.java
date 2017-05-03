@@ -600,6 +600,11 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                     double losersRatio = StockUtils.losersRatio(date, 25);
                     nk225.setLosersRatio(losersRatio);
                     Log.d(TAG, fmt.format(date) + ":騰落レシオ(25) " + String.valueOf(losersRatio));
+                } else {
+                    // 前日の騰落レシオで代用
+                    double losersRatio = StockUtils.losersRatio(MarketCalendar.getLastBussinessDay(date), 25);
+                    nk225.setLosersRatio(losersRatio);
+                    Log.d(TAG, fmt.format(date) + ":騰落レシオ(25:前日) " + String.valueOf(losersRatio));
                 }
 
                 nk225.setMarketClosing(marketClosing);
