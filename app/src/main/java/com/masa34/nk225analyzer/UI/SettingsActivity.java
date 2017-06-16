@@ -1,8 +1,10 @@
 package com.masa34.nk225analyzer.UI;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
@@ -50,6 +52,18 @@ public class SettingsActivity extends PreferenceActivity {
             Log.d(TAG, "onAttach");
 
             this.context = context;
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            Log.d(TAG, "onAttach(Activity)");
+
+            // Android 6.0未満ではActivityを引数にしたonAttachしか呼ばれないようだ
+            // Android 6.0以降では両方のonAttachが呼ばれる
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                this.context = activity.getApplicationContext();
+            }
         }
 
         @Override
