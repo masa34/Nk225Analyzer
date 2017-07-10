@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="display_period_lists">
+        <item>全データ</item>
+        <item>25日</item>
+        <item>75日</item>
+        <item>200日</item>
+    </string-array>
+    <string-array name="display_period_values">
+        <item>0</item>
+        <item>25</item>
+        <item>75</item>
+        <item>200</item>
+    </string-array>
+</resources>
