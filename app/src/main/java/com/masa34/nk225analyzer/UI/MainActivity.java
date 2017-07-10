@@ -49,12 +49,20 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     private boolean isStartup = false;
     private boolean isVisible = false;
-    private boolean isDelayReflesh = false;
+    private boolean needReflesh = false;
+
+    private static final int REQUEST_CODE = 1;
 
     private boolean isAutoDownload() {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
 
         return preference.getBoolean("auto_download", false);
+    }
+
+    private int getDisplayPeriod() {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+
+        return Integer.parseInt(preference.getString("display_period", "0"));
     }
 
     @Override
@@ -116,14 +124,14 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         adView.loadAd(adRequest);
 
         isStartup = true;
-        isDelayReflesh = false;
+        needReflesh = false;
     }
 
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
 
-        isDelayReflesh = false;
+        needReflesh = false;
 
         adView.destroy();
         super.onDestroy();
@@ -161,8 +169,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         }
 
-        if (isDelayReflesh) {
-            isDelayReflesh = false;
+        if (needReflesh) {
+            needReflesh = false;
 
             onRefresh();
         }
@@ -204,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
             case R.id.action_settings:
                 Intent intent = new android.content.Intent(this, SettingsActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, REQUEST_CODE);
                 return true;
 
             case R.id.action_db_init:
@@ -243,6 +251,17 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     public void onLoadFinished(Loader<List<Nk225Entity>> loader, List<Nk225Entity> data) {
         Log.d(TAG, "onLoadFinished");
+
+        // 指定日数以前のデータは捨てる
+        int displayPeriod = getDisplayPeriod();
+        if (displayPeriod > 0) {
+            int from = 0;
+            int to = data.size() - displayPeriod;
+            if (to < 0) {
+                to = 0;
+            }
+            data.subList(from, to).clear();
+        }
 
         pagerAdapter = new Nk225PagerAdapter(getSupportFragmentManager());
         pagerAdapter.setNk225Entitiy(data);
@@ -287,6 +306,29 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         Log.d(TAG, "onLoaderReset");
 
         // 今回は無視する
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            //SecondActivityから戻ってきた場合
+            case (REQUEST_CODE):
+                if (resultCode == RESULT_OK) {
+                    //OKボタンを押して戻ってきたときの処理
+                    if (data.getBooleanExtra("displayPeriodChanged", false)) {
+                        // 表示期間が変更された
+                        needReflesh = true;
+                    }
+                } else if (resultCode == RESULT_CANCELED) {
+                    //キャンセルボタンを押して戻ってきたときの処理
+                } else {
+                    //その他
+                }
+                break;
+
+            default:
+                break;
+        }
     }
 
     // 以下ダウンロード関連処理
@@ -341,7 +383,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             if (isVisible) {
                 onRefresh();
             } else {
-                isDelayReflesh = true;
+                needReflesh = true;
             }
         }
     }

@@ -5,6 +5,14 @@
         android:summary="@string/summary_auto_download"
         android:defaultValue="false"/>
 
+    <ListPreference
+        android:key="display_period"
+        android:title="表示期間指定"
+        android:summary="指定した期間の日経平均データを表示します"
+        android:entries="@array/display_period_lists"
+        android:entryValues="@array/display_period_values"
+        android:dialogTitle="表示期間指定" />
+
     <PreferenceScreen
         android:key="version"
         android:title="@string/setting_version">

@@ -2,27 +2,51 @@ package com.masa34.nk225analyzer.UI;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import com.masa34.nk225analyzer.R;
 
 public class SettingsActivity extends PreferenceActivity {
 
-    //private final String TAG = "SettingsActivity";
+    String displayPeriod;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment()).commit();
+
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+        displayPeriod = preference.getString("display_period", "0");
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN) {
+                // 戻るボタンが押された場合
+
+                // 結果を設定
+                Intent intent = new Intent();
+                SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+                intent.putExtra("displayPeriodChanged", !displayPeriod.equals(preference.getString("display_period", "0")));
+                setResult(RESULT_OK, intent);
+                finish();
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(e);
     }
 
     public static class SettingsFragment extends PreferenceFragment {
