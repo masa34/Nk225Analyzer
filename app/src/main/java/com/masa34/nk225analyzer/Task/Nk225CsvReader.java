@@ -83,6 +83,6 @@ public class Nk225CsvReader {
             callBack.onPostCsvRead(result);
         }
 
-        return true;
+        return result;
     }
 }

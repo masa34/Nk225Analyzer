@@ -123,18 +123,40 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
         Log.d(TAG, "downloadNk225Csv");
 
-        // ダウンロード開始日(ダウンロード済み最新データの日時)
-        Date fromDate;
+        // 引け前のデータは再取得のため削除
         Realm realm = null;
         try {
             realm = Realm.getDefaultInstance();
 
-            // ※日付はstring.xmlに書きたい
-            fromDate = DateUtils.convertToDate("2015/01/01", "yyyy/MM/dd");
+            realm.executeTransaction(new Realm.Transaction() {
+                @Override
+                public void execute(Realm realm) {
 
-            Date maxDate = realm.where(Candlestick.class).maximumDate("date");
-            if (maxDate != null) {
-                fromDate = maxDate;
+                    RealmResults<Candlestick> candlesticks = realm.where(Candlestick.class).equalTo("marketClosing", false).findAll();
+                    candlesticks.deleteAllFromRealm();
+
+                    RealmResults<Nk225Entity> entities = realm.where(Nk225Entity.class).equalTo("marketClosing", false).findAll();
+                    entities.deleteAllFromRealm();
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+            return false;
+        } finally {
+            if (realm != null) {
+                realm.close();
+            }
+        }
+
+        // ダウンロード開始日(ダウンロード済み最新データの日時)
+        Date fromDate;
+        try {
+            realm = Realm.getDefaultInstance();
+
+            fromDate = realm.where(Candlestick.class).maximumDate("date");
+            if (fromDate == null) {
+                // ※日付はstring.xmlに書きたい
+                fromDate = DateUtils.convertToDate("2015/01/01", "yyyy/MM/dd");
             }
         } catch (ParseException e) {
             Log.e(TAG, e.toString());
@@ -157,32 +179,8 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
             if (MarketCalendar.isMarketHoliday(toDate)) {
                 toDate = MarketCalendar.getLastBussinessDay(toDate);
             } else {
-                try {
-                    realm = Realm.getDefaultInstance();
-
-                    realm.executeTransaction(new Realm.Transaction() {
-                        @Override
-                        public void execute(Realm realm) {
-                            // 引け前のデータは再計算のため削除
-
-                            RealmResults<Candlestick> candlesticks = realm.where(Candlestick.class).equalTo("marketClosing", false).findAll();
-                            candlesticks.deleteAllFromRealm();
-
-                            RealmResults<Nk225Entity> entities = realm.where(Nk225Entity.class).equalTo("marketClosing", false).findAll();
-                            entities.deleteAllFromRealm();
-                        }
-                    });
-
-                    if (cal.get(Calendar.HOUR_OF_DAY) >= 9) {
-                        isMarketOpening = true;
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, e.toString());
-                    return false;
-                } finally {
-                    if (realm != null) {
-                        realm.close();
-                    }
+                if (cal.get(Calendar.HOUR_OF_DAY) >= 9) {
+                    isMarketOpening = true;
                 }
             }
         } catch (ParseException e) {
@@ -216,23 +214,21 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                                 if (CandlestickValidator.isValid(values, dateFormat)) {
                                     Date date = DateUtils.convertToDate(values[0], dateFormat);
 
-                                    if (realm.where(Candlestick.class).equalTo("date", date).count() > 0) {
-                                        return;
+                                    if (realm.where(Candlestick.class).equalTo("date", date).count() == 0) {
+                                        Candlestick candlestick = realm.createObject(Candlestick.class);
+
+                                        long nextId = 1;
+                                        Number maxId = realm.where(Candlestick.class).max("id");
+                                        if (maxId != null) nextId = maxId.longValue() + 1;
+                                        candlestick.setId(nextId);
+
+                                        candlestick.setDate(date);
+                                        candlestick.setOpeningPrice(Float.parseFloat(values[1]));
+                                        candlestick.setHighPrice(Float.parseFloat(values[2]));
+                                        candlestick.setLowPrice(Float.parseFloat(values[3]));
+                                        candlestick.setClosingPrice(Float.parseFloat(values[4]));
+                                        candlestick.setMarketClosing(true);
                                     }
-
-                                    Candlestick candlestick = realm.createObject(Candlestick.class);
-
-                                    long nextId = 1;
-                                    Number maxId = realm.where(Candlestick.class).max("id");
-                                    if (maxId != null) nextId = maxId.longValue() + 1;
-                                    candlestick.setId(nextId);
-
-                                    candlestick.setDate(date);
-                                    candlestick.setOpeningPrice(Float.parseFloat(values[1]));
-                                    candlestick.setHighPrice(Float.parseFloat(values[2]));
-                                    candlestick.setLowPrice(Float.parseFloat(values[3]));
-                                    candlestick.setClosingPrice(Float.parseFloat(values[4]));
-                                    candlestick.setMarketClosing(true);
                                 }
                             } catch (ParseException e) {
                                 e.printStackTrace();
@@ -264,6 +260,7 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
             // 最新がダウンロード済みのため、ダウンロード処理は不要
         }
 
+        // 日中株価取得
         if (isMarketOpening) {
             realm = Realm.getDefaultInstance();
 
@@ -419,10 +416,8 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
         try {
             realm = Realm.getDefaultInstance();
 
-            Date maxDate = realm.where(MarketT1.class).maximumDate("date");
-            if (maxDate != null) {
-                fromDate = maxDate;
-            } else {
+            fromDate = realm.where(MarketT1.class).maximumDate("date");
+            if (fromDate == null) {
                 fromDate = convertToDate("2015/01/01", "yyyy/MM/dd");
             }
         } catch (ParseException e) {
@@ -450,79 +445,76 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
             return false;
         }
 
-        // 最新がダウンロード済みのため、ダウンロード処理は不要
-        if (fromDate.compareTo(toDate) == 0) {
-            return true;
-        }
+        if (fromDate.compareTo(toDate) != 0) {
+            int fromYear = DateUtils.getYear(fromDate);
+            int toYear = DateUtils.getYear(toDate);
 
-        int fromYear = DateUtils.getYear(fromDate);
-        int toYear = DateUtils.getYear(toDate);
+            for (int yy = fromYear; yy <= toYear; ++yy) {
+                try {
+                    final String T1_URL = "http://k-db.com/statistics/T1/%1$d?download=csv";
+                    Log.d(TAG, String.format(T1_URL, yy));
 
-        for (int yy = fromYear; yy <= toYear; ++yy) {
-            try {
-                final String T1_URL = "http://k-db.com/statistics/T1/%1$d?download=csv";
-                Log.d(TAG, String.format(T1_URL, yy));
+                    Nk225CsvReader csvReader = new Nk225CsvReader(new Nk225CsvReader.CsvReadCallBack() {
+                        Realm realm = null;
 
-                Nk225CsvReader csvReader = new Nk225CsvReader(new Nk225CsvReader.CsvReadCallBack() {
-                    Realm realm = null;
+                        @Override
+                        public void onPreCsvRead() {
+                            realm = Realm.getDefaultInstance();
+                            realm.beginTransaction();
+                        }
 
-                    @Override
-                    public void onPreCsvRead() {
-                        realm = Realm.getDefaultInstance();
-                        realm.beginTransaction();
-                    }
+                        @Override
+                        public void onCsvRead(String[] values) {
+                            try {
+                                if (MarketValidator.isValid(values)) {
 
-                    @Override
-                    public void onCsvRead(String[] values) {
-                        try {
-                            if (MarketValidator.isValid(values)) {
+                                    SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+                                    Date date = fmt.parse(values[0]);
 
-                                SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
-                                Date date = fmt.parse(values[0]);
+                                    if (realm.where(MarketT1.class).equalTo("date", date).count() == 0) {
+                                        MarketT1 marketT1 = realm.createObject(MarketT1.class);
 
-                                if (realm.where(MarketT1.class).equalTo("date", date).count() > 0) {
-                                    return;
+                                        long nextId = 1;
+                                        Number maxId = realm.where(MarketT1.class).max("id");
+                                        if (maxId != null) nextId = maxId.longValue() + 1;
+                                        marketT1.setId(nextId);
+
+                                        marketT1.setDate(date);
+                                        marketT1.setVolume(Long.parseLong(values[1]));
+                                        marketT1.setTurnover(Long.parseLong(values[2]));
+                                        marketT1.setAdvances(Integer.parseInt(values[5]));
+                                        marketT1.setDecliners(Integer.parseInt(values[7]));
+                                    }
                                 }
-
-                                MarketT1 marketT1 = realm.createObject(MarketT1.class);
-
-                                long nextId = 1;
-                                Number maxId = realm.where(MarketT1.class).max("id");
-                                if (maxId != null) nextId = maxId.longValue() + 1;
-                                marketT1.setId(nextId);
-
-                                marketT1.setDate(date);
-                                marketT1.setVolume(Long.parseLong(values[1]));
-                                marketT1.setTurnover(Long.parseLong(values[2]));
-                                marketT1.setAdvances(Integer.parseInt(values[5]));
-                                marketT1.setDecliners(Integer.parseInt(values[7]));
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                                Log.e(TAG, e.toString());
                             }
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                            Log.e(TAG, e.toString());
-                        }
-                    }
-
-                    @Override
-                    public void onPostCsvRead(boolean result) {
-                        if (result) {
-                            realm.commitTransaction();
-                        } else  {
-                            realm.cancelTransaction();
                         }
 
-                        realm.close();
-                    }
-                });
+                        @Override
+                        public void onPostCsvRead(boolean result) {
+                            if (result) {
+                                realm.commitTransaction();
+                            } else  {
+                                realm.cancelTransaction();
+                            }
 
-                if (!csvReader.execute(new URL(String.format(T1_URL, yy)))) {
+                            realm.close();
+                        }
+                    });
+
+                    if (!csvReader.execute(new URL(String.format(T1_URL, yy)))) {
+                        return false;
+                    }
+
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
                     return false;
                 }
-
-            } catch (Exception e) {
-                Log.e(TAG, e.toString());
-                return false;
             }
+        } else {
+            // 最新がダウンロード済みのため、ダウンロード処理は不要
         }
 
         return true;
@@ -538,13 +530,13 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
             realm.beginTransaction();
 
             // テクニカルを計算するのは2016/1/1以降
-            Date startDate = realm.where(Nk225Entity.class).maximumDate("date");
-            if (startDate == null) {
-                startDate = DateUtils.convertToDate("2016/01/01", "yyyy/MM/dd");
+            Date fromDate = realm.where(Nk225Entity.class).maximumDate("date");
+            if (fromDate == null) {
+                fromDate = DateUtils.convertToDate("2016/01/01", "yyyy/MM/dd");
             }
 
             RealmResults<Candlestick> results = realm.where(Candlestick.class)
-                    .greaterThan("date", startDate)
+                    .greaterThan("date", fromDate)
                     .findAllSorted("date", Sort.ASCENDING);
 
             for (int i = 0; i < results.size(); ++i) {
