@@ -127,20 +127,18 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
         Realm realm = null;
         try {
             realm = Realm.getDefaultInstance();
+            realm.beginTransaction();
 
-            realm.executeTransaction(new Realm.Transaction() {
-                @Override
-                public void execute(Realm realm) {
+            RealmResults<Candlestick> candlesticks = realm.where(Candlestick.class).equalTo("marketClosing", false).findAll();
+            candlesticks.deleteAllFromRealm();
 
-                    RealmResults<Candlestick> candlesticks = realm.where(Candlestick.class).equalTo("marketClosing", false).findAll();
-                    candlesticks.deleteAllFromRealm();
+            RealmResults<Nk225Entity> entities = realm.where(Nk225Entity.class).equalTo("marketClosing", false).findAll();
+            entities.deleteAllFromRealm();
 
-                    RealmResults<Nk225Entity> entities = realm.where(Nk225Entity.class).equalTo("marketClosing", false).findAll();
-                    entities.deleteAllFromRealm();
-                }
-            });
+            realm.commitTransaction();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
+            realm.cancelTransaction();
             return false;
         } finally {
             if (realm != null) {
