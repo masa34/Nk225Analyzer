@@ -362,10 +362,14 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
 
         @Override
-        protected void onPostDownloadProcess() {
+        protected void onPostDownloadProcess(boolean result) {
             dismissProgressDialog();
 
-            Toast.makeText(MainActivity.this, "画面を下に引っ張り、表示を更新して下さい", Toast.LENGTH_LONG).show();
+            if (result) {
+                Toast.makeText(MainActivity.this, "画面を下に引っ張り、表示を更新して下さい", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(MainActivity.this, "株価データの取得に失敗しました。\nしばらく時間をおいてから再度お試しください", Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -377,13 +381,17 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
 
         @Override
-        protected void onPostDownloadProcess() {
+        protected void onPostDownloadProcess(boolean result) {
             dismissProgressDialog();
 
             if (isVisible) {
                 onRefresh();
             } else {
                 needReflesh = true;
+            }
+
+            if (!result) {
+                Toast.makeText(MainActivity.this, "株価データの取得に失敗しました。\nしばらく時間をおいてから再度お試しください", Toast.LENGTH_LONG).show();
             }
         }
     }

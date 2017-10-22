@@ -12,23 +12,12 @@ import com.masa34.nk225analyzer.Util.DateUtils;
 import com.masa34.nk225analyzer.Util.Validator.CandlestickValidator;
 import com.masa34.nk225analyzer.Util.Validator.MarketValidator;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
@@ -258,6 +247,7 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
             // 最新がダウンロード済みのため、ダウンロード処理は不要
         }
 
+        /*
         // 日中株価取得
         if (isMarketOpening) {
             realm = Realm.getDefaultInstance();
@@ -400,6 +390,7 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                 }
             }
         }
+        */
 
         return true;
     }

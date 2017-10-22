@@ -23,7 +23,7 @@ abstract public class AbstractNk225DownloadProcess {
         public void onPostDownload(boolean result) {
             Log.d(TAG, "onPostDownload");
 
-            onPostDownloadProcess();
+            onPostDownloadProcess(result);
 
             downloader = null;
         }
@@ -47,5 +47,5 @@ abstract public class AbstractNk225DownloadProcess {
     }
 
     abstract protected void onPreDownloadProcess();
-    abstract protected void onPostDownloadProcess();
+    abstract protected void onPostDownloadProcess(boolean result);
 }
