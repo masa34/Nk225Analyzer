@@ -28,9 +28,26 @@ public class DateUtils {
         }
     }
 
+    public static Date getNow() {
+        Calendar cal = Calendar.getInstance();
+        int y = cal.get(Calendar.YEAR);
+        int m = cal.get(Calendar.MONTH) + 1;
+        int d = cal.get(Calendar.DATE);
+        try {
+            return convertToDate(String.format("%04d/%02d/%02d", y, m, d), "yyyy/MM/dd");
+        }
+        catch (ParseException e) {
+            return null;
+        }
+    }
+
     public static int getYear(Date date) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
         return cal.get(Calendar.YEAR);
+    }
+
+    public static int DifferenceDays(Date date1, Date date2) {
+        return (int)(date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24);
     }
 }

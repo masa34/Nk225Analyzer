@@ -1,9 +1,11 @@
 package com.masa34.nk225analyzer.UI;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.LoaderManager;
@@ -11,9 +13,11 @@ import android.support.v4.content.Loader;
 import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,7 +30,10 @@ import com.masa34.nk225analyzer.R;
 import com.masa34.nk225analyzer.Stock.Nk225Entity;
 import com.masa34.nk225analyzer.Task.AbstractNk225DownloadProcess;
 import com.masa34.nk225analyzer.Task.Nk225ListReader;
+import com.masa34.nk225analyzer.Util.DateUtils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import io.realm.DynamicRealm;
@@ -191,6 +198,80 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         adView.pause();
         super.onPause();
+    }
+
+    // BACKボタンが押された時の処理
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.d(TAG, "onKeyDown");
+
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            // 評価の訴求
+            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+            String review = preference.getString("review_date", "");
+            if (review.isEmpty()) {
+                boolean dispAler = false;
+                String later = preference.getString("later_date", "");
+                if (later.isEmpty()) {
+                    dispAler = true;
+                }
+                else {
+                    try {
+                        // 前回「あとで」を選択してから3日以上経過していたら再度表示
+                        Date nowDate = DateUtils.getNow();
+                        Date laterDate = DateUtils.convertToDate(later, "yyyy/MM/dd");
+                        int diffDay = DateUtils.DifferenceDays(nowDate, laterDate);
+                        if (diffDay > 3) {
+                            dispAler = true;
+                        }
+                    }
+                    catch (Exception e) {
+                        Log.e(TAG, e.toString());
+                    }
+                }
+
+                if (dispAler) {
+                    new AlertDialog.Builder(this)
+                        .setTitle("評価のお願い")
+                        .setMessage("ご利用ありがとうございます\n開発の励みになるので、良ければ★5のレビューをお願いします")
+                        .setPositiveButton("評価する", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
+                                SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+                                SharedPreferences.Editor editor = preference.edit();
+                                editor.putString("review_date", fmt.format(DateUtils.getNow()));
+                                editor.commit();
+
+                                // レビュー画面を表示
+                                Intent intent = new Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://play.google.com/store/apps/details?id=com.masa34.nk225analyzer"));
+                                startActivity(intent);
+
+                                MainActivity.this.finish();
+                            }
+                        })
+                        .setNegativeButton("あとで", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
+                                SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+                                SharedPreferences.Editor editor = preference.edit();
+                                editor.putString("later_date", fmt.format(DateUtils.getNow()));
+                                editor.commit();
+
+                                MainActivity.this.finish();
+                            }
+                        })
+                        .show();
+
+                    return true;
+                }
+            }
+        }
+
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
