@@ -19,7 +19,7 @@ public class LosersRatioCard extends Nk225CardBase {
         if (entity.getMarketClosing()) {
             double losersRatio = entity.getLosersRatio();
 
-            holder1.setValue(String.format("%+.2f", losersRatio));
+            holder1.setValue(String.format("%.2f", losersRatio));
             if (losersRatio >= 130.0) {
                 holder1.setValueColor(Color.RED);
             } else if (losersRatio <= 70.0) {
