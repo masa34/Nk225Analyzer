@@ -101,9 +101,10 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
             return false;
         }
 
-        if (!downloadMarketT1Csv()) {
-            return false;
-        }
+        // ※騰落レシオを計算するための情報が取得できなくなったため暫定対応とする
+        //if (!downloadMarketT1Csv()) {
+        //    return false;
+        //}
 
         return true;
     }
@@ -176,72 +177,69 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
         }
 
         if (fromDate.compareTo(toDate) != 0) {
-            int fromYear = DateUtils.getYear(fromDate);
-            int toYear = DateUtils.getYear(toDate);
+            try {
+                final String NK225_URL = "https://indexes.nikkei.co.jp/nkave/historical/nikkei_stock_average_daily_jp.csv";
+                Log.d(TAG, NK225_URL);
 
-            for (int yy = fromYear; yy <= toYear; ++yy) {
-                try {
-                    final String NK225_URL = "http://k-db.com/indices/I101/1d/%1$d?download=csv";
-                    Log.d(TAG, String.format(NK225_URL, yy));
+                Nk225CsvReader csvReader = new Nk225CsvReader(new Nk225CsvReader.CsvReadCallBack() {
 
-                    Nk225CsvReader csvReader = new Nk225CsvReader(new Nk225CsvReader.CsvReadCallBack() {
+                    Realm realm = null;
 
-                        Realm realm = null;
-
-                        @Override
-                        public void onPreCsvRead() {
-                            realm = Realm.getDefaultInstance();
-                            realm.beginTransaction();
-                        }
-
-                        @Override
-                        public void onCsvRead(String[] values) {
-                            try {
-                                String dateFormat = "yyyy-MM-dd";
-                                if (CandlestickValidator.isValid(values, dateFormat)) {
-                                    Date date = DateUtils.convertToDate(values[0], dateFormat);
-
-                                    if (realm.where(Candlestick.class).equalTo("date", date).count() == 0) {
-                                        Candlestick candlestick = realm.createObject(Candlestick.class);
-
-                                        long nextId = 1;
-                                        Number maxId = realm.where(Candlestick.class).max("id");
-                                        if (maxId != null) nextId = maxId.longValue() + 1;
-                                        candlestick.setId(nextId);
-
-                                        candlestick.setDate(date);
-                                        candlestick.setOpeningPrice(Float.parseFloat(values[1]));
-                                        candlestick.setHighPrice(Float.parseFloat(values[2]));
-                                        candlestick.setLowPrice(Float.parseFloat(values[3]));
-                                        candlestick.setClosingPrice(Float.parseFloat(values[4]));
-                                        candlestick.setMarketClosing(true);
-                                    }
-                                }
-                            } catch (ParseException e) {
-                                e.printStackTrace();
-                                Log.e(TAG, e.toString());
-                            }
-                        }
-
-                        @Override
-                        public void onPostCsvRead(boolean result) {
-                            if (result) {
-                                realm.commitTransaction();
-                            } else  {
-                                realm.cancelTransaction();
-                            }
-
-                            realm.close();
-                        }
-                    });
-
-                    if (!csvReader.execute(new URL(String.format(NK225_URL, yy)))) {
-                        return false;
+                    @Override
+                    public void onPreCsvRead() {
+                        realm = Realm.getDefaultInstance();
+                        realm.beginTransaction();
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, e.toString());
+
+                    @Override
+                    public void onCsvRead(String[] values) {
+                        try {
+                            String dateFormat = "yyyy/MM/dd";
+                            if (CandlestickValidator.isValid(values, dateFormat)) {
+                                Date date = DateUtils.convertToDate(values[0], dateFormat);
+
+                                if (realm.where(Candlestick.class).equalTo("date", date).count() == 0) {
+                                    Candlestick candlestick = realm.createObject(Candlestick.class);
+
+                                    long nextId = 1;
+                                    Number maxId = realm.where(Candlestick.class).max("id");
+                                    if (maxId != null) nextId = maxId.longValue() + 1;
+                                    candlestick.setId(nextId);
+
+                                    candlestick.setDate(date);
+                                    candlestick.setOpeningPrice(Float.parseFloat(values[2]));
+                                    candlestick.setHighPrice(Float.parseFloat(values[3]));
+                                    candlestick.setLowPrice(Float.parseFloat(values[4]));
+                                    candlestick.setClosingPrice(Float.parseFloat(values[1]));
+                                    // ※騰落レシオを計算するための情報が取得できなくなったため暫定対応とする
+                                    //candlestick.setMarketClosing(true);
+                                    candlestick.setMarketClosing(false);
+                                }
+                            }
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                            Log.e(TAG, e.toString());
+                        }
+                    }
+
+                    @Override
+                    public void onPostCsvRead(boolean result) {
+                        if (result) {
+                            realm.commitTransaction();
+                        } else  {
+                            realm.cancelTransaction();
+                        }
+
+                        realm.close();
+                    }
+                });
+
+                if (!csvReader.execute(new URL(NK225_URL))) {
                     return false;
                 }
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+                return false;
             }
         } else {
             // 最新がダウンロード済みのため、ダウンロード処理は不要
