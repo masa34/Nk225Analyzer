@@ -5,7 +5,6 @@ import android.graphics.Color;
 import com.masa34.nk225analyzer.R;
 import com.masa34.nk225analyzer.Stock.Nk225Entity;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,7 +52,8 @@ public class ComprehensiveEvaluationCard extends Nk225CardBase {
         String updated = "";
         if (!entity.getMarketClosing()) {
             try {
-                updated = new SimpleDateFormat("HH:mm更新").format(entity.getDate());
+                // ※騰落レシオを計算するための情報が取得できなくなったため暫定対応とする
+                //updated = new SimpleDateFormat("Hmm更新").format(entity.getDate());
             } catch (NumberFormatException e) {
             }
         }
@@ -102,7 +102,7 @@ public class ComprehensiveEvaluationCard extends Nk225CardBase {
         scores.add(calcPsychologicalScore(entity));
         scores.add(calcRsiScore(entity));
         scores.add(calcRciScore(entity));
-        scores.add(calcLosersRatioScore(entity));
+        //scores.add(calcLosersRatioScore(entity));
 
         double totalScore = 0.0;
         for (Double score : scores) {

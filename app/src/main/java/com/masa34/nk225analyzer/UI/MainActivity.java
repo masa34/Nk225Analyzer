@@ -133,10 +133,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         isStartup = true;
         needReflesh = false;
 
-        new AlertDialog.Builder(this)
-                .setTitle("お知らせ")
-                .setMessage("ただいまサービス停止中につきデータの取得ができません。\r\n復旧までいましばらくお待ちください")
-                .show();
+        //new AlertDialog.Builder(this)
+        //        .setTitle("お知らせ")
+        //        .setMessage("ただいまサービス停止中につきデータの取得ができません。\r\n復旧までいましばらくお待ちください")
+        //        .show();
     }
 
     @Override
