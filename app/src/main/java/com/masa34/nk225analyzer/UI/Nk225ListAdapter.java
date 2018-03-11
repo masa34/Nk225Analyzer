@@ -16,6 +16,7 @@ import com.masa34.nk225analyzer.UI.Card.LosersRatioCard;
 import com.masa34.nk225analyzer.UI.Card.MovingAverageCard;
 import com.masa34.nk225analyzer.UI.Card.Nk225Card;
 import com.masa34.nk225analyzer.UI.Card.Nk225CardBase;
+import com.masa34.nk225analyzer.UI.Card.PriceRangeCard;
 import com.masa34.nk225analyzer.UI.Card.PsychologicalCard;
 import com.masa34.nk225analyzer.UI.Card.RciCard;
 import com.masa34.nk225analyzer.UI.Card.RsiCard;
@@ -47,6 +48,7 @@ public class Nk225ListAdapter extends RecyclerView.Adapter<ViewHolder> {
         cardList.add(new PsychologicalCard(entity));
         //cardList.add(new StochasticsCard(entity));
         cardList.add(new MovingAverageCard(entity));
+        cardList.add(new PriceRangeCard(entity));
         //cardList.add(new MacdCard(entity));
     }
 

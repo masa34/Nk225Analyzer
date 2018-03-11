@@ -147,6 +147,61 @@ public class StockUtils {
         return total / period;
     }
 
+    // 値幅
+    public static double priceRange(Date date) {
+
+        double range = 0.0;
+
+        Realm realm = null;
+        try {
+            realm = Realm.getDefaultInstance();
+
+            List<Candlestick> results = realm.where(Candlestick.class)
+                    .equalTo("date", date)
+                    .findAll();
+
+            if (results.size() >= 1) {
+                range = results.get(0).getHighPrice() - results.get(0).getLowPrice();
+            }
+        } finally {
+            if (realm != null) {
+                realm.close();
+            }
+        }
+
+        return range;
+    }
+
+    // n日移動平均算出
+    public static double priceRangeAverage(Date date, int period) {
+
+        if (period <= 0) {
+            // エラー
+        }
+
+        double total = 0.0;
+
+        Realm realm = null;
+        try {
+            realm = Realm.getDefaultInstance();
+
+            List<Candlestick> results = realm.where(Candlestick.class)
+                    .lessThanOrEqualTo("date", date)
+                    .findAllSorted("date", Sort.DESCENDING)
+                    .subList(0, period);
+
+            for (ListIterator it = results.listIterator(); it.hasNext(); ) {
+                total += (((Candlestick) it.next()).getHighPrice() - ((Candlestick) it.next()).getLowPrice());
+            }
+        } finally {
+            if (realm != null) {
+                realm.close();
+            }
+        }
+
+        return total / period;
+    }
+
     // n日RSI
     public static double rsi(Date date, int period) {
 

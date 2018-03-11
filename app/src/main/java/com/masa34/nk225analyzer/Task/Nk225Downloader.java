@@ -562,6 +562,14 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                 nk225.setStandardDeviation(sigma);
                 Log.d(TAG, fmt.format(date) + ":標準偏差(25) " + String.valueOf(sigma));
 
+                double range = StockUtils.priceRange(date);
+                nk225.setPriceRange(range);
+                Log.d(TAG, fmt.format(date) + ":当日値幅 " + String.valueOf(range));
+
+                double range20 = StockUtils.priceRangeAverage(date, 20);
+                nk225.setPriceRangeAverage20(range20);
+                Log.d(TAG, fmt.format(date) + ":20日平均値幅 " + String.valueOf(range20));
+
                 double rsi = StockUtils.rsi(date, 14);
                 nk225.setRsi(rsi);
                 Log.d(TAG, fmt.format(date) + ":RSI(14) " + String.valueOf(rsi));
