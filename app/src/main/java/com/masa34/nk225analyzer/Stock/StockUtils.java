@@ -161,7 +161,8 @@ public class StockUtils {
                     .findAll();
 
             if (results.size() >= 1) {
-                range = results.get(0).getHighPrice() - results.get(0).getLowPrice();
+                Candlestick candlestick = results.get(0);
+                range = candlestick.getHighPrice() - candlestick.getLowPrice();
             }
         } finally {
             if (realm != null) {
@@ -172,7 +173,7 @@ public class StockUtils {
         return range;
     }
 
-    // n日移動平均算出
+    // n日平均値幅
     public static double priceRangeAverage(Date date, int period) {
 
         if (period <= 0) {
@@ -191,7 +192,8 @@ public class StockUtils {
                     .subList(0, period);
 
             for (ListIterator it = results.listIterator(); it.hasNext(); ) {
-                total += (((Candlestick) it.next()).getHighPrice() - ((Candlestick) it.next()).getLowPrice());
+                Candlestick candlestick = (Candlestick)it.next();
+                total += (candlestick.getHighPrice() - candlestick.getLowPrice());
             }
         } finally {
             if (realm != null) {

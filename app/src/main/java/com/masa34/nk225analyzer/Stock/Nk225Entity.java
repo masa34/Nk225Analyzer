@@ -117,16 +117,16 @@ public class Nk225Entity extends RealmObject implements Serializable {
         return priceRange;
     }
 
-    public void setPriceRange(double priceRange) {
-        this.priceRange = priceRange;
+    public void setPriceRange(double range) {
+        this.priceRange = range;
     }
 
     public double getPriceRangeAverage20() {
         return priceRangeAverage20;
     }
 
-    public void setPriceRangeAverage20(double priceRangeAverage20) {
-        this.priceRangeAverage20 = priceRangeAverage20;
+    public void setPriceRangeAverage20(double range20) {
+        this.priceRangeAverage20 = range20;
     }
 
     public double getRsi() {
