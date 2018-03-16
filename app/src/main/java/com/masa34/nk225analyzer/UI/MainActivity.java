@@ -249,10 +249,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
             String review = preference.getString("review_date", "");
             if (review.isEmpty()) {
-                boolean dispAler = false;
+                boolean dispAlert = false;
                 String later = preference.getString("later_date", "");
                 if (later.isEmpty()) {
-                    dispAler = true;
+                    dispAlert = true;
                 }
                 else {
                     try {
@@ -261,7 +261,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         Date laterDate = DateUtils.convertToDate(later, "yyyy/MM/dd");
                         int diffDay = DateUtils.DifferenceDays(nowDate, laterDate);
                         if (diffDay > 3) {
-                            dispAler = true;
+                            dispAlert = true;
                         }
                     }
                     catch (Exception e) {
@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     }
                 }
 
-                if (dispAler) {
+                if (dispAlert) {
                     new AlertDialog.Builder(this)
                         .setTitle("評価のお願い")
                         .setMessage("ご利用ありがとうございます\n開発の励みになるので、良ければ★5のレビューをお願いします")
