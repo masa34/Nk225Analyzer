@@ -524,27 +524,31 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             return false;
         }
 
-        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
-        int schemaVersion = Integer.parseInt(preference.getString("schema_version", "0"));
+        try {
+            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+            int schemaVersion = Integer.parseInt(preference.getString("schema_version", "0"));
 
-        if (schemaVersion < 1) {
-            if (!migrateDb0To1(realm)) {
-                return false;
+            if (schemaVersion < 1) {
+                if (!migrateDb0To1(realm)) {
+                    return false;
+                }
+
+                SharedPreferences.Editor editor = preference.edit();
+                editor.putString("schema_version", "1");
+                editor.commit();
             }
 
-            SharedPreferences.Editor editor = preference.edit();
-            editor.putString("schema_version", "1");
-            editor.commit();
-        }
+            if (schemaVersion < 2) {
+                if (!migrateDb1To2(realm)) {
+                    return false;
+                }
 
-        if (schemaVersion < 2) {
-            if (!migrateDb1To2(realm)) {
-                return false;
+                SharedPreferences.Editor editor = preference.edit();
+                editor.putString("schema_version", "2");
+                editor.commit();
             }
-
-            SharedPreferences.Editor editor = preference.edit();
-            editor.putString("schema_version", "2");
-            editor.commit();
+        } finally {
+            realm.close();
         }
 
         return true;
@@ -601,8 +605,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             Log.e(TAG, e.toString());
 
             return false;
-        } finally {
-            realm.close();
         }
 
         return true;
