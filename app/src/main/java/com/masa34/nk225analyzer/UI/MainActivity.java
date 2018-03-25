@@ -27,7 +27,9 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.masa34.nk225analyzer.R;
+import com.masa34.nk225analyzer.Stock.Candlestick;
 import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Stock.StockUtils;
 import com.masa34.nk225analyzer.Task.AbstractNk225DownloadProcess;
 import com.masa34.nk225analyzer.Task.Nk225ListReader;
 import com.masa34.nk225analyzer.Util.DateUtils;
@@ -43,7 +45,9 @@ import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import io.realm.RealmMigration;
 import io.realm.RealmObjectSchema;
+import io.realm.RealmResults;
 import io.realm.RealmSchema;
+import io.realm.Sort;
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, LoaderManager.LoaderCallbacks<List<Nk225Entity>> {
 
@@ -80,14 +84,14 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // Realm初期化
         Realm.setDefaultConfiguration(new RealmConfiguration.Builder(this)
-                .schemaVersion(1)
+                .schemaVersion(2)
                 .migration(new RealmMigration() {
                     @Override
                     public void migrate(final DynamicRealm realm, long oldVersion, long newVersion) {
                         RealmSchema schema = realm.getSchema();
 
+                        // Version 0 to 1
                         if (oldVersion == 0) {
-
                             // CandlestickテーブルにmarketClosingカラムを追加
                             schema.get("Candlestick")
                                     .addField("marketClosing", boolean.class, FieldAttribute.REQUIRED)
@@ -96,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                                         public void apply(DynamicRealmObject obj) {
                                             obj.setBoolean("marketClosing", true);
                                         }
-                                });
+                                    });
 
                             // Nk225EntityテーブルにmarketClosingカラムを追加
                             schema.get("Nk225Entity")
@@ -110,9 +114,39 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                             oldVersion++;
                         }
+
+                        // Version 1 to 2
+                        if (oldVersion == 1) {
+                            // Nk225EntityテーブルにpriceRange,priceRangeAverage20カラムを追加
+                            schema.get("Nk225Entity")
+                                    .addField("priceRange", double.class, FieldAttribute.REQUIRED)
+                                    .addField("priceRangeAverage20", double.class, FieldAttribute.REQUIRED)
+                                    .transform(new RealmObjectSchema.Function() {
+                                        @Override
+                                        public void apply(DynamicRealmObject obj) {
+                                            obj.setDouble("priceRange", 0.0);
+                                            obj.setDouble("priceRangeAverage20", 0.0);
+                                        }
+                                    });
+
+                            oldVersion++;
+                        }
                     }
                 })
                 .build());
+
+        // データ移行
+        if (!migareteDb()) {
+            new AlertDialog.Builder(this)
+                .setTitle("お知らせ")
+                .setMessage("データベースの移行に失敗しました。\r\n再度データをダウンロードしてください")
+                .show();
+
+            //// DB削除
+            //RealmConfiguration config = new RealmConfiguration.Builder(this).build();
+            //Realm.deleteRealm(config);
+            //Realm.setDefaultConfiguration(config);
+        }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -215,10 +249,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
             String review = preference.getString("review_date", "");
             if (review.isEmpty()) {
-                boolean dispAler = false;
+                boolean dispAlert = false;
                 String later = preference.getString("later_date", "");
                 if (later.isEmpty()) {
-                    dispAler = true;
+                    dispAlert = true;
                 }
                 else {
                     try {
@@ -227,7 +261,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         Date laterDate = DateUtils.convertToDate(later, "yyyy/MM/dd");
                         int diffDay = DateUtils.DifferenceDays(nowDate, laterDate);
                         if (diffDay > 3) {
-                            dispAler = true;
+                            dispAlert = true;
                         }
                     }
                     catch (Exception e) {
@@ -235,7 +269,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     }
                 }
 
-                if (dispAler) {
+                if (dispAlert) {
                     new AlertDialog.Builder(this)
                         .setTitle("評価のお願い")
                         .setMessage("ご利用ありがとうございます\n開発の励みになるので、良ければ★5のレビューをお願いします")
@@ -480,5 +514,99 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 Toast.makeText(MainActivity.this, "株価データの取得に失敗しました。\nしばらく時間をおいてから再度お試しください", Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    private boolean migareteDb() {
+
+        Realm realm = Realm.getDefaultInstance();
+
+        if (realm == null) {
+            return false;
+        }
+
+        try {
+            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+            int schemaVersion = Integer.parseInt(preference.getString("schema_version", "0"));
+
+            if (schemaVersion < 1) {
+                if (!migrateDb0To1(realm)) {
+                    return false;
+                }
+
+                SharedPreferences.Editor editor = preference.edit();
+                editor.putString("schema_version", "1");
+                editor.commit();
+            }
+
+            if (schemaVersion < 2) {
+                if (!migrateDb1To2(realm)) {
+                    return false;
+                }
+
+                SharedPreferences.Editor editor = preference.edit();
+                editor.putString("schema_version", "2");
+                editor.commit();
+            }
+        } finally {
+            realm.close();
+        }
+
+        return true;
+    }
+
+    private boolean migrateDb0To1(Realm realm) {
+
+        Log.d(TAG, "migrateDb0To1");
+
+        return true;
+    }
+
+    private boolean migrateDb1To2(Realm realm) {
+
+        Log.d(TAG, "migrateDb1To2");
+
+        try {
+            realm.beginTransaction();
+
+            SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
+
+            // 2016/1/1以降を再計算
+            Date fromDate = DateUtils.convertToDate("2016/01/01", "yyyy/MM/dd");
+            RealmResults<Candlestick> results = realm.where(Candlestick.class)
+                .greaterThan("date", fromDate)
+                .findAllSorted("date", Sort.ASCENDING);
+
+            for (int i = 0; i < results.size(); ++i) {
+
+                Date date = results.get(i).getDate();
+
+                RealmResults<Nk225Entity> nk225Entities = realm.where(Nk225Entity.class)
+                    .equalTo("date", date)
+                    .findAll();
+
+                for (int j = 0; j < nk225Entities.size(); ++j) {
+
+                    Nk225Entity nk225 = nk225Entities.get(j);
+
+                    double range = StockUtils.priceRange(date);
+                    nk225.setPriceRange(range);
+                    Log.d(TAG, fmt.format(date) + ":当日値幅 " + String.valueOf(range));
+
+                    double rangeAvg20 = StockUtils.priceRangeAverage(date, 20);
+                    nk225.setPriceRangeAverage20(rangeAvg20);
+                    Log.d(TAG, fmt.format(date) + ":20日平均値幅 " + String.valueOf(rangeAvg20));
+                }
+            }
+
+            realm.commitTransaction();
+        } catch (Exception e) {
+            realm.cancelTransaction();
+
+            Log.e(TAG, e.toString());
+
+            return false;
+        }
+
+        return true;
     }
 }

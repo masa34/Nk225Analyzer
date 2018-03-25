@@ -32,6 +32,12 @@ public class Nk225Entity extends RealmObject implements Serializable {
     // 25日標準偏差（σ）
     private double standardDeviation25;
 
+    // 当日値幅
+    private double priceRange;
+
+    // 20日平均値幅
+    private double priceRangeAverage20;
+
     // RSI
     private double rsi;
 
@@ -105,6 +111,22 @@ public class Nk225Entity extends RealmObject implements Serializable {
 
     public void setStandardDeviation(double sigma) {
         this.standardDeviation25 = sigma;
+    }
+
+    public double getPriceRange() {
+        return priceRange;
+    }
+
+    public void setPriceRange(double range) {
+        this.priceRange = range;
+    }
+
+    public double getPriceRangeAverage20() {
+        return priceRangeAverage20;
+    }
+
+    public void setPriceRangeAverage20(double range20) {
+        this.priceRangeAverage20 = range20;
     }
 
     public double getRsi() {

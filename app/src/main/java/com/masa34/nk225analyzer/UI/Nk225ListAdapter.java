@@ -12,10 +12,10 @@ import com.masa34.nk225analyzer.UI.Card.BollingerBandCard;
 import com.masa34.nk225analyzer.UI.Card.ComprehensiveEvaluationCard;
 import com.masa34.nk225analyzer.UI.Card.EstrangementRateCard;
 import com.masa34.nk225analyzer.UI.Card.EvaluationViewHolder;
-import com.masa34.nk225analyzer.UI.Card.LosersRatioCard;
 import com.masa34.nk225analyzer.UI.Card.MovingAverageCard;
 import com.masa34.nk225analyzer.UI.Card.Nk225Card;
 import com.masa34.nk225analyzer.UI.Card.Nk225CardBase;
+import com.masa34.nk225analyzer.UI.Card.PriceRangeCard;
 import com.masa34.nk225analyzer.UI.Card.PsychologicalCard;
 import com.masa34.nk225analyzer.UI.Card.RciCard;
 import com.masa34.nk225analyzer.UI.Card.RsiCard;
@@ -40,13 +40,14 @@ public class Nk225ListAdapter extends RecyclerView.Adapter<ViewHolder> {
         cardList.add(new ComprehensiveEvaluationCard(entity));
         cardList.add(new Nk225Card(entity));
         cardList.add(new EstrangementRateCard(entity));
-        cardList.add(new LosersRatioCard(entity));
+        //cardList.add(new LosersRatioCard(entity));
         cardList.add(new RsiCard(entity));
         cardList.add(new RciCard(entity));
         cardList.add(new BollingerBandCard(entity));
         cardList.add(new PsychologicalCard(entity));
         //cardList.add(new StochasticsCard(entity));
         cardList.add(new MovingAverageCard(entity));
+        cardList.add(new PriceRangeCard(entity));
         //cardList.add(new MacdCard(entity));
     }
 
