@@ -3,23 +3,22 @@ package com.masa34.nk225analyzer.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.util.Log;
 import android.view.KeyEvent;
 
 import com.masa34.nk225analyzer.R;
+import com.masa34.nk225analyzer.Util.Nk225Preference;
 
 public class SettingsActivity extends PreferenceActivity {
 
-    String displayPeriod;
+    int displayPeriod;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -27,8 +26,7 @@ public class SettingsActivity extends PreferenceActivity {
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment()).commit();
 
-        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
-        displayPeriod = preference.getString("display_period", "0");
+        displayPeriod = Nk225Preference.getInstance(this).getDisplayPeriod();
     }
 
     @Override
@@ -39,8 +37,7 @@ public class SettingsActivity extends PreferenceActivity {
 
                 // 結果を設定
                 Intent intent = new Intent();
-                SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
-                intent.putExtra("displayPeriodChanged", !displayPeriod.equals(preference.getString("display_period", "0")));
+                intent.putExtra("displayPeriodChanged", displayPeriod != Nk225Preference.getInstance(this).getDisplayPeriod());
                 setResult(RESULT_OK, intent);
                 finish();
                 return true;
