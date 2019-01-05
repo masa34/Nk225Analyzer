@@ -5,8 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
@@ -46,7 +48,7 @@ public class SettingsActivity extends PreferenceActivity {
         return super.dispatchKeyEvent(e);
     }
 
-    public static class SettingsFragment extends PreferenceFragment {
+    public static class SettingsFragment extends PreferenceFragment implements Preference.OnPreferenceClickListener {
 
         private final String TAG = "SettingsFragment";
 
@@ -57,14 +59,19 @@ public class SettingsActivity extends PreferenceActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings);
 
+            // バージョン番号表示
             PackageManager pm = context.getPackageManager();
             try {
                 PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
-                PreferenceScreen pref = (PreferenceScreen)getPreferenceScreen().findPreference("version");
-                pref.setSummary(packageInfo.versionName);
+                PreferenceScreen version = (PreferenceScreen)getPreferenceScreen().findPreference("version");
+                version.setSummary(packageInfo.versionName);
             } catch (PackageManager.NameNotFoundException e) {
                 Log.e(TAG, e.toString());
             }
+
+            // プライバシーポリシー
+            PreferenceScreen privacy_policy = (PreferenceScreen) findPreference("privacy_policy");
+            privacy_policy.setOnPreferenceClickListener(this);
         }
 
         @Override
@@ -91,6 +98,20 @@ public class SettingsActivity extends PreferenceActivity {
         public void onDetach() {
             super.onDetach();
             Log.d(TAG, "onDetach");
+        }
+
+        @Override
+        public boolean onPreferenceClick(Preference preference) {
+
+            switch (preference.getKey()) {
+                case "privacy_policy":
+                    Uri uri = Uri.parse("http://masapu.cocolog-nifty.com/kabu/2018/09/post-80a7.html");
+                    Intent i = new Intent(Intent.ACTION_VIEW, uri);
+                    startActivity(i);
+                    break;
+            }
+
+            return false;
         }
     }
 }
