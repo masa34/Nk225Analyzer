@@ -3,11 +3,9 @@ package com.masa34.nk225analyzer.UI;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.PagerTabStrip;
@@ -33,6 +31,7 @@ import com.masa34.nk225analyzer.Stock.StockUtils;
 import com.masa34.nk225analyzer.Task.AbstractNk225DownloadProcess;
 import com.masa34.nk225analyzer.Task.Nk225ListReader;
 import com.masa34.nk225analyzer.Util.DateUtils;
+import com.masa34.nk225analyzer.Util.Nk225Preference;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -63,18 +62,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private boolean needReflesh = false;
 
     private static final int REQUEST_CODE = 1;
-
-    private boolean isAutoDownload() {
-        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
-
-        return preference.getBoolean("auto_download", false);
-    }
-
-    private int getDisplayPeriod() {
-        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
-
-        return Integer.parseInt(preference.getString("display_period", "0"));
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -206,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
 
         if (isStartup) {
-            if (isAutoDownload()) {
+            if (Nk225Preference.getInstance(this).isAutoDownload()) {
                 // 自動ダウンロード
                 downloader = new AutoNk225DownloadProcess();
                 downloader.execute();
@@ -246,11 +233,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             // 評価の訴求
-            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
-            String review = preference.getString("review_date", "");
+            Nk225Preference preference = Nk225Preference.getInstance(this);
+            String review = preference.getReviewDate();
             if (review.isEmpty()) {
                 boolean dispAlert = false;
-                String later = preference.getString("later_date", "");
+                String later = preference.getLaterDate();
                 if (later.isEmpty()) {
                     dispAlert = true;
                 }
@@ -276,11 +263,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         .setPositiveButton("評価する", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                Nk225Preference preference = Nk225Preference.getInstance(MainActivity.this);
                                 SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
-                                SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-                                SharedPreferences.Editor editor = preference.edit();
-                                editor.putString("review_date", fmt.format(DateUtils.getNow()));
-                                editor.commit();
+                                preference.setReviewDate(fmt.format(DateUtils.getNow()));
 
                                 // レビュー画面を表示
                                 Intent intent = new Intent(
@@ -294,11 +279,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         .setNegativeButton("あとで", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                Nk225Preference preference = Nk225Preference.getInstance(MainActivity.this);
                                 SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
-                                SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-                                SharedPreferences.Editor editor = preference.edit();
-                                editor.putString("later_date", fmt.format(DateUtils.getNow()));
-                                editor.commit();
+                                preference.setLaterDate(fmt.format(DateUtils.getNow()));
 
                                 MainActivity.this.finish();
                             }
@@ -373,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         Log.d(TAG, "onLoadFinished");
 
         // 指定日数以前のデータは捨てる
-        int displayPeriod = getDisplayPeriod();
+        int displayPeriod = Nk225Preference.getInstance(this).getDisplayPeriod();
         if (displayPeriod > 0) {
             int from = 0;
             int to = data.size() - displayPeriod;
@@ -525,17 +508,15 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
 
         try {
-            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
-            int schemaVersion = Integer.parseInt(preference.getString("schema_version", "0"));
+            Nk225Preference preference = Nk225Preference.getInstance(this);
+            int schemaVersion = preference.getSchemaVersion();
 
             if (schemaVersion < 1) {
                 if (!migrateDb0To1(realm)) {
                     return false;
                 }
 
-                SharedPreferences.Editor editor = preference.edit();
-                editor.putString("schema_version", "1");
-                editor.commit();
+                preference.setSchemaVersion(1);
             }
 
             if (schemaVersion < 2) {
@@ -543,9 +524,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     return false;
                 }
 
-                SharedPreferences.Editor editor = preference.edit();
-                editor.putString("schema_version", "2");
-                editor.commit();
+                preference.setSchemaVersion(2);
             }
         } finally {
             realm.close();
