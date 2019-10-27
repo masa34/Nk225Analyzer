@@ -113,30 +113,8 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
         Log.d(TAG, "downloadNk225Csv");
 
-        // 引け前のデータは再取得のため削除
-        Realm realm = null;
-        try {
-            realm = Realm.getDefaultInstance();
-            realm.beginTransaction();
-
-            RealmResults<Candlestick> candlesticks = realm.where(Candlestick.class).equalTo("marketClosing", false).findAll();
-            candlesticks.deleteAllFromRealm();
-
-            RealmResults<Nk225Entity> entities = realm.where(Nk225Entity.class).equalTo("marketClosing", false).findAll();
-            entities.deleteAllFromRealm();
-
-            realm.commitTransaction();
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-            realm.cancelTransaction();
-            return false;
-        } finally {
-            if (realm != null) {
-                realm.close();
-            }
-        }
-
         // ダウンロード開始日(ダウンロード済み最新データの日時)
+        Realm realm = null;
         Date fromDate;
         try {
             realm = Realm.getDefaultInstance();
@@ -244,151 +222,6 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
         } else {
             // 最新がダウンロード済みのため、ダウンロード処理は不要
         }
-
-        /*
-        // 日中株価取得
-        if (isMarketOpening) {
-            realm = Realm.getDefaultInstance();
-
-            try {
-                if (realm.where(Candlestick.class).equalTo("date", toDate).count() == 0) {
-                    HttpURLConnection urlConnection = null;
-                    InputStream inputStream = null;
-
-                    try {
-                        // Google Financeから30分ディレイの日中株価を取得
-                        final String googleFinanceUrl = "http://www.google.com/finance/getprices?p=1d&f=d,o,h,l,c&i=300&x=INDEXNIKKEI&q=NI225";
-                        URL url = new URL(googleFinanceUrl);
-
-                        final int TIMEOUT_READ = 5000;
-                        final int TIMEOUT_CONNECT = 30000;
-                        urlConnection = (HttpURLConnection) url.openConnection();
-                        urlConnection.setRequestMethod("GET");
-                        urlConnection.setReadTimeout(TIMEOUT_READ);
-                        urlConnection.setConnectTimeout(TIMEOUT_CONNECT);
-                        urlConnection.setInstanceFollowRedirects(false);
-                        urlConnection.setRequestProperty("Accept-Language", "ja");
-                        urlConnection.connect();
-
-                        inputStream = urlConnection.getInputStream();
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                        List<Candlestick> candlesticks = new ArrayList<>();
-
-                        String line;
-                        String[] values;
-                        Map<String, String> header = new HashMap<>();
-                        long baseDate = 0;
-                        while ((line = reader.readLine()) != null) {
-                            Log.i(TAG, line);
-
-                            // ヘッダ部
-                            values = line.split("=", 2);
-                            if (values.length == 2) {
-                                header.put(values[0], values[1]);
-                                continue;
-                            }
-
-                            // データ部
-                            values = line.split(",", 0);
-                            if (values.length == 5) {
-
-                                long utime = 0;
-
-                                Pattern p = Pattern.compile("^a[0-9]*$");
-                                Matcher m = p.matcher(values[0]);
-                                if (m.find()) {
-
-                                    if (baseDate != 0) {
-                                        Log.e(TAG, "想定外のフォーマット");
-                                        break;
-                                    }
-
-                                    // データ部1行目
-                                    baseDate = Long.parseLong(values[0].substring(1));
-                                    utime = baseDate;
-                                } else {
-                                    // データ部2行目以降
-                                    utime = baseDate + Long.parseLong(values[0]) * Long.parseLong(header.get("INTERVAL"));
-                                }
-
-                                // 配列の最初の要素を日付形式に変換
-                                String dateFormat = "yyyy/MM/dd HH:mm";
-                                try {
-                                    values[0] = new SimpleDateFormat(dateFormat).format(new Date(utime * 1000L));
-                                } catch (NumberFormatException e) {
-                                    Log.e(TAG, e.toString());
-                                    break;
-                                }
-
-                                if (CandlestickValidator.isValid(values, dateFormat)) {
-                                    try {
-                                        Date date = DateUtils.convertToDate(values[0], dateFormat);
-                                        if (date.compareTo(toDate) >= 0) {
-                                            // 5分足1本分の株価情報
-                                            Candlestick candlestick = new Candlestick();
-                                            candlestick.setDate(date);
-                                            candlestick.setOpeningPrice(Float.parseFloat(values[1]));
-                                            candlestick.setHighPrice(Float.parseFloat(values[2]));
-                                            candlestick.setLowPrice(Float.parseFloat(values[3]));
-                                            candlestick.setClosingPrice(Float.parseFloat(values[4]));
-
-                                            candlesticks.add(candlestick);
-                                        }
-                                    } catch (ParseException e) {
-                                        Log.e(TAG, e.toString());
-                                        break;
-                                    }
-                                }
-                                continue;
-                            }
-                        }
-
-                        if (candlesticks.size() > 0) {
-
-                            // 1時間足を合成して日足に変換
-                            Candlestick candlestick = StockUtils.MergeChart(candlesticks);
-                            candlestick.setMarketClosing(false);
-
-                            long nextId = 1;
-                            Number maxId = realm.where(Candlestick.class).max("id");
-                            if (maxId != null) nextId = maxId.longValue() + 1;
-                            candlestick.setId(nextId);
-
-                            try {
-                                realm.beginTransaction();
-                                realm.copyToRealm(candlestick);
-                                realm.commitTransaction();
-                            } catch (Exception e) {
-                                realm.cancelTransaction();
-
-                                e.printStackTrace();
-                                Log.e(TAG, e.toString());
-                            }
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Log.e(TAG, e.toString());
-                    } finally {
-                        try {
-                            if (inputStream != null) {
-                                inputStream.close();
-                            }
-                            if (urlConnection != null) {
-                                urlConnection.disconnect();
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, e.toString());
-                        }
-                    }
-                }
-            } finally {
-                if (realm != null) {
-                    realm.close();
-                }
-            }
-        }
-        */
 
         return true;
     }
@@ -516,10 +349,10 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
             realm = Realm.getDefaultInstance();
             realm.beginTransaction();
 
-            // テクニカルを計算するのは2016/1/1以降
+            // テクニカルを計算するのは2017/1/1以降
             Date fromDate = realm.where(Nk225Entity.class).maximumDate("date");
             if (fromDate == null) {
-                fromDate = DateUtils.convertToDate("2016/01/01", "yyyy/MM/dd");
+                fromDate = DateUtils.convertToDate("2017/01/01", "yyyy/MM/dd");
             }
 
             RealmResults<Candlestick> results = realm.where(Candlestick.class)
