@@ -2,6 +2,7 @@ package com.masa34.nk225analyzer.Stock;
 
 import java.lang.reflect.Constructor;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -32,7 +33,8 @@ public class MarketCalendar {
                 if (m == 12 && d == 31) return true;
 
                 // 祝日は休業日
-                if (Holiday.isHoliday(date)) {
+                int[] days = Holiday.listHoliDays(cal.get(Calendar.YEAR), m - 1);
+                if (Arrays.binarySearch(days, d) >= 0) {
                     return true;
                 }
                 break;
@@ -166,15 +168,24 @@ public class MarketCalendar {
             }
             Date[] ds = getNatinalHoliday(year);
             if (ds.length > 0){
-                for(int i=0;i < ds.length;i++){
-                    set.add(ds[i]);
-                }
+                for(Date d:ds) set.add(d);
+            }
+            if (year == 2019){
+                set.add(toDate(2019, 4, 30));
+                set.add(toDate(2019, 5, 1));
+                set.add(toDate(2019, 5, 2));
+                set.add(toDate(2019, 10, 22));
             }
             this.holidayDates = new Date[set.size()];
             int n=0;
             for(Iterator<Date> it=set.iterator();it.hasNext();n++){
                 this.holidayDates[n] = it.next();
             }
+        }
+        private static Date toDate(int year, int month, int day){
+            Calendar cal = Calendar.getInstance();
+            cal.set(year, month - 1, day);
+            return cal.getTime();
         }
         /** HolidayType は、祝日タイプ→HolidayBundle class を紐付ける enum */
         public enum HolidayType{
@@ -209,20 +220,19 @@ public class MarketCalendar {
             }
         }
         // 月→HolidayBundle class 参照 enum
-        enum MonthBundle{
-            JANUARY       (NewYearDayBundle.class,ComingOfAgeDayBundle.class)
-            ,FEBRUARY     (NatinalFoundationBundle.class)
-            ,MARCH        (SpringEquinoxBundle.class)
-            ,APRIL        (ShowaDayBundle.class)
-            ,MAY          (KenpoukikenDayBundle.class,MidoriDayBundle.class,KodomoDayBundle.class)
-            ,JUNE         ()
-            ,JULY         (SeaDayBundle.class)
-            ,AUGUST       (MountainDayBundle.class)
-            ,SEPTEMBER    (RespectForAgeDayBundle.class,AutumnEquinoxBundle.class)
-            ,OCTOBER      (HealthSportsDayBundle.class)
-            ,NOVEMBER     (CultureDayBundle.class,LaborThanksDayBundle.class)
-            ,DECEMBER     (TennoBirthDayBundle.class)
-            ;
+        private enum MonthBundle{
+            JANUARY        (NewYearDayBundle.class, ComingOfAgeDayBundle.class)
+            , FEBRUARY     (NatinalFoundationBundle.class, TennoBirthDayBundle.class)
+            , MARCH        (SpringEquinoxBundle.class)
+            , APRIL        (ShowaDayBundle.class)
+            , MAY          (KenpoukikenDayBundle.class, MidoriDayBundle.class, KodomoDayBundle.class)
+            , JUNE         ()
+            , JULY         (SeaDayBundle.class)
+            , AUGUST       (MountainDayBundle.class)
+            , SEPTEMBER    (RespectForAgeDayBundle.class, AutumnEquinoxBundle.class)
+            , OCTOBER      (HealthSportsDayBundle.class)
+            , NOVEMBER     (CultureDayBundle.class, LaborThanksDayBundle.class)
+            , DECEMBER     ();
             //
             private Constructor<?>[] constructors;
             MonthBundle(Class<?>...clss){
@@ -299,8 +309,77 @@ public class MarketCalendar {
             if (calender_MONTH < 0 || 11 < calender_MONTH){
                 throw new IllegalArgumentException("calender_MONTH parameter Error");
             }
-            if (year < 2016 && calender_MONTH == 7) return new int[]{};  // since ver 2.0
+            if (year < 2016 && calender_MONTH == Calendar.AUGUST) return new int[]{};  // since ver 2.0
             MonthBundle mb = MonthBundle.valueOf(MONTH_NAMES[calender_MONTH]);
+            if (year < 2019) {
+                if (calender_MONTH == Calendar.FEBRUARY) {
+                    Set<Integer> set = new TreeSet<Integer>();
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ NatinalFoundationBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        set.add(h.getDay());
+                        int chgday = h.getChangeDay();
+                        if (chgday > 0) set.add(chgday);
+                        if (set.size()==0) return new int[]{};
+                        int[] rtns = new int[set.size()];
+                        int i=0;
+                        for(Iterator<Integer> it = set.iterator(); it.hasNext(); i++){
+                            rtns[i] = it.next();
+                        }
+                        return rtns;
+                    } catch(Exception e){
+                    }
+                } else if (calender_MONTH == Calendar.DECEMBER) {
+                    Set<Integer> set = new TreeSet<Integer>();
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ TennoBirthDayBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        set.add(h.getDay());
+                        int chgday = h.getChangeDay();
+                        if (chgday > 0) set.add(chgday);
+                        if (set.size()==0) return new int[]{};
+                        int[] rtns = new int[set.size()];
+                        int i=0;
+                        for(Iterator<Integer> it = set.iterator(); it.hasNext(); i++){
+                            rtns[i] = it.next();
+                        }
+                        return rtns;
+                    } catch(Exception e){
+                    }
+                }
+            } else if (year == 2019) {
+                // 2019年は天皇誕生日無し ver 3.1
+                if (calender_MONTH == Calendar.FEBRUARY) {
+                    Set<Integer> set = new TreeSet<Integer>();
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ NatinalFoundationBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        set.add(h.getDay());
+                        int chgday = h.getChangeDay();
+                        if (chgday > 0) set.add(chgday);
+                        if (set.size()==0) return new int[]{};
+                        int[] rtns = new int[set.size()];
+                        int i=0;
+                        for(Iterator<Integer> it = set.iterator(); it.hasNext(); i++){
+                            rtns[i] = it.next();
+                        }
+                        return rtns;
+                    } catch(Exception e){
+                    }
+                } else if (calender_MONTH == Calendar.MAY) {
+                    return new int[]{ 1, 2, 3, 4, 5, 6 };
+                } else if (calender_MONTH == Calendar.SEPTEMBER) {
+                    return new int[]{ 16, 23 };
+                } else if (calender_MONTH == Calendar.OCTOBER) {
+                    return new int[]{ 14, 22 };
+                }
+            } else if (year == 2020) {
+                if (calender_MONTH == Calendar.JULY) {
+                    return new int[]{ 23, 24 };
+                } else if (calender_MONTH == Calendar.OCTOBER) {
+                    return new int[]{};
+                }
+            }
             Constructor<?>[] constructors = mb.getConstructors();
             if (constructors==null) return new int[]{};
             Set<Integer> set = new TreeSet<Integer>();
@@ -314,7 +393,7 @@ public class MarketCalendar {
                 }
             }
             // 現在、国民の休日の発生は９月しかない
-            if (calender_MONTH==Calendar.SEPTEMBER){
+            if (calender_MONTH == Calendar.SEPTEMBER){
                 Date[] ds = getNatinalHoliday(year);
                 if (ds.length > 0){
                     Calendar cal = Calendar.getInstance();
@@ -324,6 +403,15 @@ public class MarketCalendar {
                     }
                 }
             }
+            // ver3.3 平成の次の即位日
+            if (year==2019){
+                if (calender_MONTH == Calendar.APRIL){
+                    set.add(30);
+                }else if(calender_MONTH == Calendar.MAY){
+                    set.add(2);
+                }
+            }
+            if (set.size()==0) return new int[]{};
             int[] rtns = new int[set.size()];
             int i=0;
             for(Iterator<Integer> it = set.iterator(); it.hasNext(); i++){
@@ -331,18 +419,87 @@ public class MarketCalendar {
             }
             return rtns;
         }
+
         /**
          * 指定年、月の祝日、振替休日、国民の休日、日付(Date)配列で返す
          * @param year 西暦４桁
          * @param calender_MONTH java.util.Calendar.MONTHによるフィールド値 0=１月、11=１２月
          * @return Date配列
+         * @since 3.1 2019年は天皇誕生日無し
+         * @since 3.8 2019年対応
          */
         public static Date[] listHoliDayDates(int year,int calender_MONTH){
             if (calender_MONTH < 0 || 11 < calender_MONTH){
                 throw new IllegalArgumentException("calender_MONTH parameter Error");
             }
-            if (year < 2016 && calender_MONTH == 7) return new Date[]{}; // since ver 2.0
+            if (year < 2016 && calender_MONTH == Calendar.AUGUST) return new Date[]{}; // since ver 2.0
             MonthBundle mb = MonthBundle.valueOf(MONTH_NAMES[calender_MONTH]);
+            if (year < 2019) {
+                if (calender_MONTH == Calendar.FEBRUARY) {
+                    Set<Date> set = new TreeSet<Date>();
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ NatinalFoundationBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        set.add(h.getDate());
+                        Date chgdt = h.getChangeDate();
+                        if (chgdt != null) set.add(chgdt);
+                        Date[] rtns = new Date[set.size()];
+                        int i=0;
+                        for(Iterator<Date> it=set.iterator();it.hasNext();i++){
+                            rtns[i] = it.next();
+                        }
+                        return rtns;
+                    } catch(Exception e){
+                    }
+                } else if (calender_MONTH == Calendar.DECEMBER) {
+                    Set<Date> set = new TreeSet<Date>();
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ TennoBirthDayBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        set.add(h.getDate());
+                        Date chgdt = h.getChangeDate();
+                        if (chgdt != null) set.add(chgdt);
+                        Date[] rtns = new Date[set.size()];
+                        int i=0;
+                        for(Iterator<Date> it=set.iterator();it.hasNext();i++){
+                            rtns[i] = it.next();
+                        }
+                        return rtns;
+                    } catch(Exception e){
+                    }
+                }
+            } else if (year == 2019) {
+                // 2019年は天皇誕生日無し ver 3.1
+                if (calender_MONTH == Calendar.FEBRUARY) {
+                    Set<Date> set = new TreeSet<Date>();
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ NatinalFoundationBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        set.add(h.getDate());
+                        Date chgdt = h.getChangeDate();
+                        if (chgdt != null) set.add(chgdt);
+                        Date[] rtns = new Date[set.size()];
+                        int i=0;
+                        for(Iterator<Date> it=set.iterator();it.hasNext();i++){
+                            rtns[i] = it.next();
+                        }
+                        return rtns;
+                    } catch(Exception e){
+                    }
+                } else if (calender_MONTH == Calendar.MAY) {
+                    return new Date[]{ toDate(2019, 5, 1), toDate(2019, 5, 2), toDate(2019, 5, 3), toDate(2019, 5, 4), toDate(2019, 5, 5), toDate(2019, 5, 6) };
+                } else if(calender_MONTH == Calendar.SEPTEMBER) {
+                    return new Date[]{ toDate(2019, 9, 16), toDate(2019, 9, 23) };
+                } else if(calender_MONTH == Calendar.OCTOBER) {
+                    return new Date[]{ toDate(2019, 10, 14), toDate(2019, 10, 22) };
+                }
+            } else if (year == 2020) {
+                if (calender_MONTH == Calendar.JULY) {
+                    return new Date[]{ toDate(2020, 7, 23), toDate(2020, 7, 24) };
+                } else if (calender_MONTH == Calendar.OCTOBER) {
+                    return new Date[]{};
+                }
+            }
             Constructor<?>[] constructors = mb.getConstructors();
             if (constructors==null) return new Date[]{}; // for ver 2.0
             Set<Date> set = new TreeSet<Date>();
@@ -362,6 +519,15 @@ public class MarketCalendar {
                     for(Date d:ds) set.add(d);
                 }
             }
+            // ver3.3 平成の次の即位日
+            if (year == 2019){
+                if (calender_MONTH == Calendar.APRIL){
+                    set.add(toDate(2019, 4, 30));
+                }else if(calender_MONTH == Calendar.MAY){
+                    set.add(toDate(2019, 5, 2));
+                }
+            }
+            if (set.size()==0) return new Date[]{};
             Date[] rtns = new Date[set.size()];
             int i=0;
             for(Iterator<Date> it=set.iterator();it.hasNext();i++){
@@ -382,9 +548,67 @@ public class MarketCalendar {
         public static String queryHoliday(Date dt){
             Calendar cal = Calendar.getInstance();
             cal.setTime(dt);
+            int year = cal.get(Calendar.YEAR);
             int month = cal.get(Calendar.MONTH);
-            if (cal.get(Calendar.YEAR) < 2016 && month == 7) return null;   // since ver 2.0
+            if (year < 2016 && month == Calendar.AUGUST) return null;   // since ver 2.0
+            // ver 3.3
+            if (year == 2019){
+                int y = cal.get(Calendar.YEAR);
+                int m = cal.get(Calendar.MONTH);
+                int d = cal.get(Calendar.DAY_OF_MONTH);
+                dt = toDate(y, m, d);
+
+                if (dt.compareTo(toDate(2019, 4, 30)) == 0) return "国民の休日";
+                if (dt.compareTo(toDate(2019, 5, 1)) == 0) return "平成の次の即位日"; // ver 3.6
+                if (dt.compareTo(toDate(2019, 5, 2)) == 0) return "国民の休日"; // ver 3.6
+                if (dt.compareTo(toDate(2019, 10, 22)) == 0) return "即位礼正殿の儀"; // ver 3.6
+            }
             MonthBundle mb = MonthBundle.valueOf(MONTH_NAMES[month]);
+            if (year < 2019) {
+                if (month == Calendar.FEBRUARY) {
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ NatinalFoundationBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getDay()){ return h.getDescription(); }
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getChangeDay()){ return "振替休日"+"（"+h.getDescription()+"）"; }
+                    }catch(Exception e){
+                    }
+                    return null;
+                } else if (month == Calendar.DECEMBER) {
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ TennoBirthDayBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getDay()){ return h.getDescription(); }
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getChangeDay()){ return "振替休日"+"（"+h.getDescription()+"）"; }
+                    }catch(Exception e){
+                    }
+                }
+            } else if (year == 2019) {
+                // 2019年は天皇誕生日無し
+                if (month == Calendar.FEBRUARY) {
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ NatinalFoundationBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getDay()){ return h.getDescription(); }
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getChangeDay()){ return "振替休日"+"（"+h.getDescription()+"）"; }
+                    }catch(Exception e){
+                    }
+                    return null;
+                }
+            } else if (year == 2020) {
+                // 2020年に限り、体育の日（スポーツの日）は7月
+                if (month == Calendar.JULY) {
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ HealthSportsDayBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getDay()){ return h.getDescription(); }
+                        //if (cal.get(Calendar.DAY_OF_MONTH)==h.getChangeDay()){ return "振替休日"+"（"+h.getDescription()+"）"; }
+                    }catch(Exception e){
+                    }
+                } else if (month == Calendar.OCTOBER) {
+                    return null;
+                }
+            }
             Constructor<?>[] constructors = mb.getConstructors();
             if (constructors==null){
                 return null; // 祝日でない！
@@ -418,9 +642,52 @@ public class MarketCalendar {
         public static boolean isHoliday(Date dt){
             Calendar cal = Calendar.getInstance();
             cal.setTime(dt);
+            int year = cal.get(Calendar.YEAR);
             int month = cal.get(Calendar.MONTH);
-            if (cal.get(Calendar.YEAR) < 2016 && month == 7) return false;
+            if (year < 2016 && month == Calendar.AUGUST) return false;
             MonthBundle mb = MonthBundle.valueOf(MONTH_NAMES[month]);
+            if (year < 2019) {
+                if (month == Calendar.FEBRUARY) {
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ NatinalFoundationBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getDay()){ return true;}
+                        return cal.get(Calendar.DAY_OF_MONTH)==h.getChangeDay();
+                    }catch(Exception e){
+                    }
+                } if (month == Calendar.DECEMBER) {
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ TennoBirthDayBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getDay()){ return true;}
+                        return cal.get(Calendar.DAY_OF_MONTH)==h.getChangeDay();
+                    }catch(Exception e){
+                    }
+                }
+            } else if (year == 2019) {
+                // 2019年は天皇誕生日無し
+                if (month == Calendar.FEBRUARY) {
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ NatinalFoundationBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getDay()){ return true;}
+                        return cal.get(Calendar.DAY_OF_MONTH)==h.getChangeDay();
+                    }catch(Exception e){
+                    }
+                }
+            } else if (year == 2020) {
+                // 2020年に限り、体育の日（スポーツの日）は7月
+                if (month == Calendar.JULY) {
+                    try{
+                        Constructor<?>[] constructors = new Constructor<?>[]{ HealthSportsDayBundle.class.getDeclaredConstructor(Holiday.class, int.class) };
+                        HolidayBundle h = (HolidayBundle)constructors[0].newInstance(null, year);
+                        if (cal.get(Calendar.DAY_OF_MONTH)==h.getDay()){ return true;}
+                    }catch(Exception e){
+                    }
+                } else if (month == Calendar.OCTOBER) {
+                    return false;
+                }
+            }
             Constructor<?>[] constructors = mb.getConstructors();
             if (constructors==null){
                 return false; // 祝日でない！
@@ -443,6 +710,17 @@ public class MarketCalendar {
                     }
                 }
             }
+            // ver 3.3
+            if (year == 2019){
+                int y = cal.get(Calendar.YEAR);
+                int m = cal.get(Calendar.MONTH);
+                int d = cal.get(Calendar.DAY_OF_MONTH);
+                dt = toDate(y, m, d);
+
+                if (dt.compareTo(toDate(2019, 4, 30)) == 0) return true;
+                if (dt.compareTo(toDate(2019, 5, 2)) == 0) return true;
+                if (dt.compareTo(toDate(2019, 10, 22)) == 0) return true;
+            }
             return false;
         }
 
@@ -463,7 +741,11 @@ public class MarketCalendar {
 
         /** 指定年→国民の休日のみのDate[]の取得 */
         public static Date[] getNatinalHoliday(int year){
-            // 現在、敬老の日と秋分の日が１日で挟まれた場合のみ。
+            if (year==2019){
+                // ver 3.5
+                return new Date[]{ toDate(2019, 4, 30), toDate(2019, 5, 2) };
+            }
+            // 2019年以外は、敬老の日と秋分の日が１日で挟まれた場合のみ。
             HolidayBundle k = HolidayType.RESPECT_FOR_AGE_DAY.getBundle(year);
             HolidayBundle a = HolidayType.AUTUMN_EQUINOX_DAY.getBundle(year);
             int aday = a.getDay();
@@ -669,6 +951,7 @@ public class MarketCalendar {
             }
         }
         // 海の日
+        // 2020年に限り、「海の日」は7月23日
         class SeaDayBundle extends HolidayBundle{
             public SeaDayBundle(int year){
                 super(year);
@@ -676,6 +959,11 @@ public class MarketCalendar {
             /* ７月第３月曜日の日付を求める */
             @Override
             public int getDay(){
+                if (super.year == 2020)
+                {
+                    return 23;
+                }
+
                 Calendar cal = Calendar.getInstance();
                 cal.set(super.year,Calendar.JULY,1);
                 int wday = cal.get(Calendar.DAY_OF_WEEK);
@@ -697,7 +985,7 @@ public class MarketCalendar {
             }
             @Override
             public int getDay(){
-                return 11;
+                return super.year==2020 ? 10 : 11;
             }
             @Override
             public int getMonth(){
@@ -754,6 +1042,7 @@ public class MarketCalendar {
             }
         }
         // 体育の日
+        // 2020年に限り、「体育の日（スポーツの日）」は7月24日
         class HealthSportsDayBundle extends HolidayBundle{
             public HealthSportsDayBundle(int year){
                 super(year);
@@ -761,6 +1050,11 @@ public class MarketCalendar {
             /* １０月第２月曜日の日付を求める */
             @Override
             public int getDay(){
+                if (super.year == 2020)
+                {
+                    return 24;
+                }
+
                 Calendar cal = Calendar.getInstance();
                 cal.set(super.year,Calendar.OCTOBER,1);
                 int wday = cal.get(Calendar.DAY_OF_WEEK);
@@ -768,7 +1062,7 @@ public class MarketCalendar {
             }
             @Override
             public int getMonth(){
-                return 10;
+                return super.year==2020 ? 7 : 10;
             }
             @Override
             public String getDescription(){
@@ -822,11 +1116,101 @@ public class MarketCalendar {
             }
             @Override
             public int getMonth(){
-                return 12;
+                //return 12;
+                // ver 3.1
+                return super.year < 2019 ? 12 : 2;
             }
             @Override
             public String getDescription(){
                 return "天皇誕生日";
+            }
+        }
+        /**
+         * 平成の次の即位日
+         * 注意： 2019年のみ
+         * ver 3.3
+         */
+        class HeiseiNextDayBundle extends HolidayBundle{
+            public HeiseiNextDayBundle(int year){
+                super(2019);
+            }
+            @Override
+            public int getDay(){
+                return 1;
+            }
+            @Override
+            public int getMonth(){
+                return 5;
+            }
+            @Override
+            public String getDescription(){
+                return "平成の次の即位日";
+            }
+        }
+        /**
+         * 即位礼正殿の儀
+         * 注意： 2019年のみ
+         * ver 3.3
+         */
+        class SokuiReiSeidenDayBundle extends HolidayBundle{
+            public SokuiReiSeidenDayBundle(int year){
+                super(2019);
+            }
+            @Override
+            public int getDay(){
+                return 22;
+            }
+            @Override
+            public int getMonth(){
+                return 10;
+            }
+            @Override
+            public String getDescription(){
+                return "即位礼正殿の儀";
+            }
+        }
+        /**
+         * 平成の次の即位日の前日の休日
+         * 注意： 2019年のみ
+         * ver 3.5
+         */
+        class HeisetNextPrevBundle extends HolidayBundle{
+            public HeisetNextPrevBundle(int year){
+                super(2019);
+            }
+            @Override
+            public int getDay(){
+                return 30;
+            }
+            @Override
+            public int getMonth(){
+                return 4;
+            }
+            @Override
+            public String getDescription(){
+                return "国民の休日";
+            }
+        }
+        /**
+         * 平成の次の即位日の翌日の休日
+         * 注意： 2019年のみ
+         * ver 3.5
+         */
+        class HeisetNextNextBundle extends HolidayBundle{
+            public HeisetNextNextBundle(int year){
+                super(2019);
+            }
+            @Override
+            public int getDay(){
+                return 2;
+            }
+            @Override
+            public int getMonth(){
+                return 5;
+            }
+            @Override
+            public String getDescription(){
+                return "国民の休日";
             }
         }
     }
