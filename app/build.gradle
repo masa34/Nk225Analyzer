@@ -6,9 +6,9 @@ android {
     defaultConfig {
         applicationId "com.masa34.nk225analyzer"
         minSdkVersion 15
-        targetSdkVersion 24
-        versionCode 31
-        versionName "1.5.1"
+        targetSdkVersion 26
+        versionCode 33
+        versionName "1.6.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
