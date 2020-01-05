@@ -549,8 +549,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
             SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
 
-            // 2017/1/1以降を再計算
-            Date fromDate = DateUtils.convertToDate("2017/01/01", "yyyy/MM/dd");
+            // 2年前の1月1日以降を再計算
+            int year = DateUtils.getYear(new Date()) - 2;
+            Date fromDate = DateUtils.convertToDate(String.valueOf(year) + "/01/01", "yyyy/MM/dd");
             RealmResults<Candlestick> results = realm.where(Candlestick.class)
                 .greaterThan("date", fromDate)
                 .findAllSorted("date", Sort.ASCENDING);
