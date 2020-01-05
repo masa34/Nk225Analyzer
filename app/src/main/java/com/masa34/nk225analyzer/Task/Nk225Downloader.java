@@ -349,10 +349,11 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
             realm = Realm.getDefaultInstance();
             realm.beginTransaction();
 
-            // テクニカルを計算するのは2017/1/1以降
+            // テクニカルを計算するのは2年前の1月1日以降
             Date fromDate = realm.where(Nk225Entity.class).maximumDate("date");
             if (fromDate == null) {
-                fromDate = DateUtils.convertToDate("2017/01/01", "yyyy/MM/dd");
+                int year = DateUtils.getYear(new Date()) - 2;
+                fromDate = DateUtils.convertToDate(String.valueOf(year) + "/01/01", "yyyy/MM/dd");
             }
 
             RealmResults<Candlestick> results = realm.where(Candlestick.class)
