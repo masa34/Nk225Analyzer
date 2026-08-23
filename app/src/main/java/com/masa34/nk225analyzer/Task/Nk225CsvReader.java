@@ -47,7 +47,7 @@ public class Nk225CsvReader {
             urlConnection.setReadTimeout(TIMEOUT_READ);
             urlConnection.setConnectTimeout(TIMEOUT_CONNECT);
             urlConnection.setInstanceFollowRedirects(true);
-            urlConnection.setRequestProperty("User-Agent", "");
+            urlConnection.setRequestProperty("User-Agent", "Mozilla/5.0");
             urlConnection.connect();
             inputStream = urlConnection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "Shift-JIS"));
