@@ -1,6 +1,6 @@
 package com.masa34.nk225analyzer.UI.Card;
 
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 
 // ※要実装
 public class StochasticsCard extends Nk225CardBase {

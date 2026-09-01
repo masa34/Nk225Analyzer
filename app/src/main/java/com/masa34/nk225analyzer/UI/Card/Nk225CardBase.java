@@ -1,6 +1,6 @@
 package com.masa34.nk225analyzer.UI.Card;
 
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 
 public abstract class Nk225CardBase {
     public static final int TYPE_EVALUATION = 0;
