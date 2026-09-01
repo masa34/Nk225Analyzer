@@ -1,4 +1,4 @@
-package com.masa34.nk225analyzer.Stock;
+package com.masa34.nk225analyzer.Util;
 
 import java.lang.reflect.Constructor;
 import java.text.SimpleDateFormat;

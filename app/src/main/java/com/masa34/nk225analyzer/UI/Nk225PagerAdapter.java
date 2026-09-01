@@ -1,12 +1,12 @@
 package com.masa34.nk225analyzer.UI;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
 import android.util.Log;
 
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

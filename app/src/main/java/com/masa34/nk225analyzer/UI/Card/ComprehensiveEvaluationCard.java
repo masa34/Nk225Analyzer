@@ -3,7 +3,7 @@ package com.masa34.nk225analyzer.UI.Card;
 import android.graphics.Color;
 
 import com.masa34.nk225analyzer.R;
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,8 +61,8 @@ public class ComprehensiveEvaluationCard extends Nk225CardBase {
     }
 
     private double calcBollingerBandScore(Nk225Entity entity) {
-        double hBand = entity.getMovingAverage25() + 2.2 * entity.getStandardDeviation();
-        double lBand = entity.getMovingAverage25() - 2.2 * entity.getStandardDeviation();
+        double hBand = entity.getMovingAverage25() + 2.2 * entity.getStandardDeviation25();
+        double lBand = entity.getMovingAverage25() - 2.2 * entity.getStandardDeviation25();
         return (entity.getValue() - lBand) / (hBand - lBand) * 100.0;
     }
 

@@ -1,16 +1,19 @@
-package com.masa34.nk225analyzer.Stock;
+package com.masa34.nk225analyzer.Db.Entity;
+
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
 import java.util.Date;
 
-import io.realm.RealmObject;
-import io.realm.annotations.Index;
-import io.realm.annotations.PrimaryKey;
+//import io.realm.RealmObject;
+//import io.realm.annotations.Index;
+//import io.realm.annotations.PrimaryKey;
 
-public class Candlestick extends RealmObject {
-    @PrimaryKey
+@Entity(tableName = "candlestick")
+public class Candlestick {
+    @PrimaryKey(autoGenerate = true)
     private long id;
 
-    @Index
     private Date date;
 
     private double openingPrice;

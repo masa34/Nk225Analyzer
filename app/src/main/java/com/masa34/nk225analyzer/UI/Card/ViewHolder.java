@@ -1,6 +1,6 @@
 package com.masa34.nk225analyzer.UI.Card;
 
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
