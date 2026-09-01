@@ -3,27 +3,25 @@ package com.masa34.nk225analyzer.Task;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.masa34.nk225analyzer.Stock.Candlestick;
-import com.masa34.nk225analyzer.Stock.MarketCalendar;
-import com.masa34.nk225analyzer.Stock.MarketT1;
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
-import com.masa34.nk225analyzer.Stock.StockUtils;
+import com.masa34.nk225analyzer.UI.Nk225AnalyzerApp;
+import com.masa34.nk225analyzer.Db.Nk225AnalyzerDatabase;
+import com.masa34.nk225analyzer.Db.Dao.CandlestickDao;
+import com.masa34.nk225analyzer.Db.Dao.Nk225EntityDao;
+import com.masa34.nk225analyzer.Db.Entity.Candlestick;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
+import com.masa34.nk225analyzer.Util.MarketCalendar;
+import com.masa34.nk225analyzer.Util.StockUtils;
 import com.masa34.nk225analyzer.Util.DateUtils;
 import com.masa34.nk225analyzer.Util.Validator.CandlestickValidator;
-import com.masa34.nk225analyzer.Util.Validator.MarketValidator;
 
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
-
-import io.realm.Realm;
-import io.realm.RealmResults;
-import io.realm.Sort;
-
-import static com.masa34.nk225analyzer.Util.DateUtils.convertToDate;
 
 public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
@@ -114,22 +112,16 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
         Log.d(TAG, "downloadNk225Csv");
 
         // ダウンロード開始日(ダウンロード済み最新データの日時)
-        Realm realm = null;
-        Date fromDate;
-        try {
-            realm = Realm.getDefaultInstance();
+        CandlestickDao dao = Nk225AnalyzerApp.getDatabase().candlestickDao();
 
-            fromDate = realm.where(Candlestick.class).maximumDate("date");
-            if (fromDate == null) {
-                // ※日付はstring.xmlに書きたい
+        Date fromDate = dao.findMaxDate();
+        if (fromDate == null) {
+            // ※日付はstring.xmlに書きたい
+            try {
                 fromDate = DateUtils.convertToDate("2015/01/01", "yyyy/MM/dd");
-            }
-        } catch (ParseException e) {
-            Log.e(TAG, e.toString());
-            return false;
-        } finally {
-            if (realm != null) {
-                realm.close();
+            } catch (ParseException e) {
+                Log.e(TAG, e.toString());
+                return false;
             }
         }
 
@@ -161,12 +153,13 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
                 Nk225CsvReader csvReader = new Nk225CsvReader(new Nk225CsvReader.CsvReadCallBack() {
 
-                    Realm realm = null;
+                    CandlestickDao dao;
+                    List<Candlestick> candlesticks;
 
                     @Override
                     public void onPreCsvRead() {
-                        realm = Realm.getDefaultInstance();
-                        realm.beginTransaction();
+                        dao = Nk225AnalyzerApp.getDatabase().candlestickDao();
+                        candlesticks = new ArrayList<>();
                     }
 
                     @Override
@@ -176,22 +169,19 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                             if (CandlestickValidator.isValid(values, dateFormat)) {
                                 Date date = DateUtils.convertToDate(values[0], dateFormat);
 
-                                if (realm.where(Candlestick.class).equalTo("date", date).count() == 0) {
-                                    Candlestick candlestick = realm.createObject(Candlestick.class);
+                                if (dao.findByDate(date) == null) {
+                                    Candlestick c = new Candlestick();
 
-                                    long nextId = 1;
-                                    Number maxId = realm.where(Candlestick.class).max("id");
-                                    if (maxId != null) nextId = maxId.longValue() + 1;
-                                    candlestick.setId(nextId);
-
-                                    candlestick.setDate(date);
-                                    candlestick.setOpeningPrice(Float.parseFloat(values[2]));
-                                    candlestick.setHighPrice(Float.parseFloat(values[3]));
-                                    candlestick.setLowPrice(Float.parseFloat(values[4]));
-                                    candlestick.setClosingPrice(Float.parseFloat(values[1]));
+                                    c.setDate(date);
+                                    c.setOpeningPrice(Float.parseFloat(values[2]));
+                                    c.setHighPrice(Float.parseFloat(values[3]));
+                                    c.setLowPrice(Float.parseFloat(values[4]));
+                                    c.setClosingPrice(Float.parseFloat(values[1]));
                                     // ※騰落レシオを計算するための情報が取得できなくなったため暫定対応とする
-                                    //candlestick.setMarketClosing(true);
-                                    candlestick.setMarketClosing(false);
+                                    //c.setMarketClosing(true);
+                                    c.setMarketClosing(false);
+
+                                    candlesticks.add(c);
                                 }
                             }
                         } catch (ParseException e) {
@@ -202,13 +192,11 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
                     @Override
                     public void onPostCsvRead(boolean result) {
-                        if (result) {
-                            realm.commitTransaction();
-                        } else  {
-                            realm.cancelTransaction();
+                        if (result && !candlesticks.isEmpty()) {
+                            dao.insertAll(candlesticks);
                         }
 
-                        realm.close();
+                        candlesticks.clear();
                     }
                 });
 
@@ -230,6 +218,7 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
         Log.d(TAG, "downloadMarketT1Csv");
 
+        /*
         // ダウンロード開始日(ダウンロード済み最新データの日時)
         Date fromDate;
         Realm realm = null;
@@ -336,6 +325,7 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
         } else {
             // 最新がダウンロード済みのため、ダウンロード処理は不要
         }
+        */
 
         return true;
     }
@@ -344,37 +334,31 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
 
         Log.d(TAG, "calculationTechnical");
 
-        Realm realm = null;
         try {
-            realm = Realm.getDefaultInstance();
-            realm.beginTransaction();
+            Nk225AnalyzerDatabase db = Nk225AnalyzerApp.getDatabase();
+            Nk225EntityDao nkDao = db.nk225EntityDao();
+            CandlestickDao csDao = db.candlestickDao();
 
             // テクニカルを計算するのは2年前の1月1日以降
-            Date fromDate = realm.where(Nk225Entity.class).maximumDate("date");
+            Date fromDate = nkDao.findMaxDate();
             if (fromDate == null) {
                 int year = DateUtils.getYear(new Date()) - 2;
                 fromDate = DateUtils.convertToDate(String.valueOf(year) + "/01/01", "yyyy/MM/dd");
             }
 
-            RealmResults<Candlestick> results = realm.where(Candlestick.class)
-                    .greaterThan("date", fromDate)
-                    .findAllSorted("date", Sort.ASCENDING);
+            List<Nk225Entity> entities = new ArrayList<>();
+            SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
 
-            for (int i = 0; i < results.size(); ++i) {
+            List<Candlestick> candlesticks = csDao.findAfter(fromDate);
 
-                Nk225Entity nk225 = realm.createObject(Nk225Entity.class);
+            for (Candlestick c : candlesticks) {
 
-                long nextId = 1;
-                Number maxId = realm.where(Nk225Entity.class).max("id");
-                if (maxId != null) nextId = maxId.longValue() + 1;
-                nk225.setId(nextId);
+                Nk225Entity nk225 = new Nk225Entity();
 
-                boolean marketClosing = results.get(i).getMarketClosing();
+                boolean marketClosing = c.getMarketClosing();
 
-                Date date = results.get(i).getDate();
+                Date date = c.getDate();
                 nk225.setDate(date);
-
-                SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
 
                 double value = StockUtils.value(date);
                 nk225.setValue(value);
@@ -393,7 +377,7 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                 Log.d(TAG, fmt.format(date) + ":25日移動平均線 " + String.valueOf(ma25));
 
                 double sigma = StockUtils.standardDeviation(date, 25);
-                nk225.setStandardDeviation(sigma);
+                nk225.setStandardDeviation25(sigma);
                 Log.d(TAG, fmt.format(date) + ":標準偏差(25) " + String.valueOf(sigma));
 
                 double range = StockUtils.priceRange(date);
@@ -426,18 +410,16 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                 Log.d(TAG, fmt.format(losersDate) + ":騰落レシオ(25) " + String.valueOf(losersRatio));
 
                 nk225.setMarketClosing(marketClosing);
+
+                entities.add(nk225);
             }
 
-            realm.commitTransaction();
+            db.runInTransaction(() -> {
+                nkDao.insertAll(entities);
+            });
         } catch (Exception e) {
-            realm.cancelTransaction();
-
             Log.e(TAG, e.toString());
             return false;
-        } finally {
-            if (realm != null) {
-                realm.close();
-            }
         }
 
         return true;
