@@ -1,16 +1,15 @@
-package com.masa34.nk225analyzer.Stock;
+package com.masa34.nk225analyzer.Db.Entity;
+
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
 import java.util.Date;
 
-import io.realm.RealmObject;
-import io.realm.annotations.Index;
-import io.realm.annotations.PrimaryKey;
-
-public class MarketT1 extends RealmObject {
+@Entity(tableName = "market_t1")
+public class MarketT1 {
     @PrimaryKey
     private long id;
 
-    @Index
     private Date date;
 
     // 出来高

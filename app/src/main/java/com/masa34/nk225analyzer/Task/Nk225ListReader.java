@@ -26,27 +26,17 @@ public class Nk225ListReader extends AsyncTaskLoader<List<Nk225Entity>> {
 
         Log.d(TAG, "loadInBackground");
 
-        Realm realm = null;
         try {
-            realm = Realm.getDefaultInstance();
+            Nk225EntityDao dao = Nk225AnalyzerApp.getDatabase().nk225EntityDao();
 
             // ※日付は要調整
             SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
             Date date = fmt.parse("2016/01/01");
 
-            RealmResults<Nk225Entity> nk225Entities = realm.where(Nk225Entity.class)
-                    .greaterThan("date", date)
-                    .findAllSorted("date", Sort.ASCENDING);
-
-            return realm.copyFromRealm(nk225Entities);
+            return dao.findAfter(date);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
-        } finally {
-            if (realm != null) {
-                realm.close();
-            }
+            return null;
         }
-
-        return null;
     }
 }

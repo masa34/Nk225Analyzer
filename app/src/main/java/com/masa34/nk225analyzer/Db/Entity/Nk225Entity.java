@@ -1,17 +1,16 @@
-package com.masa34.nk225analyzer.Stock;
+package com.masa34.nk225analyzer.Db.Entity;
+
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
 import java.io.Serializable;
 import java.util.Date;
 
-import io.realm.RealmObject;
-import io.realm.annotations.Index;
-import io.realm.annotations.PrimaryKey;
-
-public class Nk225Entity extends RealmObject implements Serializable {
-    @PrimaryKey
+@Entity(tableName = "nk225entity")
+public class Nk225Entity implements Serializable {
+    @PrimaryKey(autoGenerate = true)
     private long id;
 
-    @Index
     private Date date;
 
     // 日経平均株価(終値)
@@ -105,11 +104,11 @@ public class Nk225Entity extends RealmObject implements Serializable {
         this.movingAverage25 = ma25;
     }
 
-    public double getStandardDeviation() {
+    public double getStandardDeviation25() {
         return standardDeviation25;
     }
 
-    public void setStandardDeviation(double sigma) {
+    public void setStandardDeviation25(double sigma) {
         this.standardDeviation25 = sigma;
     }
 

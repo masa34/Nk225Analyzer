@@ -6,7 +6,8 @@ import android.preference.PreferenceManager;
 
 public class Nk225Preference {
 
-    private static Nk225Preference instance = new Nk225Preference();
+    private static Nk225Preference instance;
+
     private static SharedPreferences preference;
 
     // コンストラクタ
@@ -14,8 +15,10 @@ public class Nk225Preference {
     }
 
     public static Nk225Preference getInstance(Context context) {
-        preference = PreferenceManager.getDefaultSharedPreferences(context);
-
+        if (instance == null) {
+            instance = new Nk225Preference();
+        }
+        preference = context.getSharedPreferences("nk225_prefs", Context.MODE_PRIVATE);
         return instance;
     }
 
@@ -23,7 +26,15 @@ public class Nk225Preference {
     private void UpdatePreference(String key, String value) {
         SharedPreferences.Editor editor = preference.edit();
         editor.putString(key, value);
-        editor.commit();
+        editor.apply();
+    }
+
+    public boolean getDownloaded() {
+        return Boolean.parseBoolean(preference.getString("downloaded", "false"));
+    }
+
+    public void setDownloaded(boolean downloaded) {
+        UpdatePreference("downloaded", String.valueOf(downloaded));
     }
 
     // 自動ダウンロード
