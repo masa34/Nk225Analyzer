@@ -1,7 +1,7 @@
 package com.masa34.nk225analyzer.UI.Card;
 
 import android.graphics.Color;
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 
 public class BollingerBandCard extends Nk225CardBase {
 
@@ -14,8 +14,8 @@ public class BollingerBandCard extends Nk225CardBase {
     }
 
     public void bindViewHolder(ViewHolder holder) {
-        double hBand = entity.getMovingAverage25() + 2.0 * entity.getStandardDeviation();
-        double lBand = entity.getMovingAverage25() - 2.0 * entity.getStandardDeviation();
+        double hBand = entity.getMovingAverage25() + 2.0 * entity.getStandardDeviation25();
+        double lBand = entity.getMovingAverage25() - 2.0 * entity.getStandardDeviation25();
 
         ViewHolder2 holder2 = (ViewHolder2)holder;
         holder2.setTitle("ボリンジャーバンド");

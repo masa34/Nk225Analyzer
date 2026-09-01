@@ -6,14 +6,14 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
-import android.support.v4.view.PagerTabStrip;
-import android.support.v4.view.ViewPager;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.viewpager.widget.PagerTabStrip;
+import androidx.viewpager.widget.ViewPager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -24,10 +24,9 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+
 import com.masa34.nk225analyzer.R;
-import com.masa34.nk225analyzer.Stock.Candlestick;
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
-import com.masa34.nk225analyzer.Stock.StockUtils;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 import com.masa34.nk225analyzer.Task.AbstractNk225DownloadProcess;
 import com.masa34.nk225analyzer.Task.Nk225ListReader;
 import com.masa34.nk225analyzer.Util.DateUtils;
@@ -36,17 +35,6 @@ import com.masa34.nk225analyzer.Util.Nk225Preference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-
-import io.realm.DynamicRealm;
-import io.realm.DynamicRealmObject;
-import io.realm.FieldAttribute;
-import io.realm.Realm;
-import io.realm.RealmConfiguration;
-import io.realm.RealmMigration;
-import io.realm.RealmObjectSchema;
-import io.realm.RealmResults;
-import io.realm.RealmSchema;
-import io.realm.Sort;
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, LoaderManager.LoaderCallbacks<List<Nk225Entity>> {
 
@@ -69,95 +57,35 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_main);
 
-        // Realm初期化
-        Realm.setDefaultConfiguration(new RealmConfiguration.Builder(this)
-                .schemaVersion(2)
-                .migration(new RealmMigration() {
-                    @Override
-                    public void migrate(final DynamicRealm realm, long oldVersion, long newVersion) {
-                        RealmSchema schema = realm.getSchema();
-
-                        // Version 0 to 1
-                        if (oldVersion == 0) {
-                            // CandlestickテーブルにmarketClosingカラムを追加
-                            schema.get("Candlestick")
-                                    .addField("marketClosing", boolean.class, FieldAttribute.REQUIRED)
-                                    .transform(new RealmObjectSchema.Function() {
-                                        @Override
-                                        public void apply(DynamicRealmObject obj) {
-                                            obj.setBoolean("marketClosing", true);
-                                        }
-                                    });
-
-                            // Nk225EntityテーブルにmarketClosingカラムを追加
-                            schema.get("Nk225Entity")
-                                    .addField("marketClosing", boolean.class, FieldAttribute.REQUIRED)
-                                    .transform(new RealmObjectSchema.Function() {
-                                        @Override
-                                        public void apply(DynamicRealmObject obj) {
-                                            obj.setBoolean("marketClosing", true);
-                                        }
-                                    });
-
-                            oldVersion++;
-                        }
-
-                        // Version 1 to 2
-                        if (oldVersion == 1) {
-                            // Nk225EntityテーブルにpriceRange,priceRangeAverage20カラムを追加
-                            schema.get("Nk225Entity")
-                                    .addField("priceRange", double.class, FieldAttribute.REQUIRED)
-                                    .addField("priceRangeAverage20", double.class, FieldAttribute.REQUIRED)
-                                    .transform(new RealmObjectSchema.Function() {
-                                        @Override
-                                        public void apply(DynamicRealmObject obj) {
-                                            obj.setDouble("priceRange", 0.0);
-                                            obj.setDouble("priceRangeAverage20", 0.0);
-                                        }
-                                    });
-
-                            oldVersion++;
-                        }
-                    }
-                })
-                .build());
-
-        // データ移行
-        if (!migareteDb()) {
-            new AlertDialog.Builder(this)
-                .setTitle("お知らせ")
-                .setMessage("データベースの移行に失敗しました。\r\n再度データをダウンロードしてください")
-                .show();
-
-            //// DB削除
-            //RealmConfiguration config = new RealmConfiguration.Builder(this).build();
-            //Realm.deleteRealm(config);
-            //Realm.setDefaultConfiguration(config);
-        }
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_widget);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_widget);
         swipeRefreshLayout.setColorSchemeResources(R.color.red, R.color.green, R.color.blue, R.color.orange);
         swipeRefreshLayout.setOnRefreshListener(this);
 
-        PagerTabStrip pagerTabStrip = (PagerTabStrip) findViewById(R.id.tab_strip);
+        PagerTabStrip pagerTabStrip = findViewById(R.id.tab_strip);
         pagerTabStrip.setVisibility(View.INVISIBLE);
 
         // 広告初期化
-        MobileAds.initialize(getApplicationContext(), "ca-app-pub-0365443143303373~5579598474");
-        adView = (AdView) findViewById(R.id.adView);
+        MobileAds.initialize(this);
+        adView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
 
         isStartup = true;
         needReflesh = false;
 
-        //new AlertDialog.Builder(this)
-        //        .setTitle("お知らせ")
-        //        .setMessage("ただいまサービス停止中につきデータの取得ができません。\r\n復旧までいましばらくお待ちください")
-        //        .show();
+        // 初回メッセージ
+        Nk225Preference preference = Nk225Preference.getInstance(this);
+        if (!preference.getDownloaded()) {
+            new AlertDialog.Builder(this)
+                .setTitle("お知らせ")
+                .setMessage("データ管理を改善しました。\r\n再ダウンロードが必要です。\r\n端末によっては時間がかかる場合があります。")
+                .show();
+
+            preference.setDownloaded(true);
+        }
     }
 
     @Override
@@ -307,22 +235,20 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.d(TAG, "onOptionsItemSelected");
 
-        switch (item.getItemId()) {
-            case R.id.action_download:
-                downloader = new ManualNk225DownloadProcess();
-                downloader.execute();
-                return true;
+        int id = item.getItemId();
 
-            case R.id.action_settings:
-                Intent intent = new android.content.Intent(this, SettingsActivity.class);
-                startActivityForResult(intent, REQUEST_CODE);
-                return true;
-
-            case R.id.action_db_init:
-                RealmConfiguration realmConfig = new RealmConfiguration.Builder(this).build();
-                Realm.deleteRealm(realmConfig);
-                Realm.setDefaultConfiguration(realmConfig);
-                return true;
+        if (id == R.id.action_download) {
+            downloader = new ManualNk225DownloadProcess();
+            downloader.execute();
+            return true;
+        } else if (id == R.id.action_settings) {
+            Intent intent = new android.content.Intent(this, SettingsActivity.class);
+            startActivityForResult(intent, REQUEST_CODE);
+            return true;
+        } else if (id == R.id.action_db_init) {
+            // RDB初期化
+            Nk225AnalyzerApp.resetDatabase(this);
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -373,23 +299,23 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
         viewPager.setAdapter(pagerAdapter);
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-                    @Override
-                    public void onPageSelected(int position) {
-                    }
+            @Override
+            public void onPageSelected(int position) {
+            }
 
-                    @Override
-                    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                    }
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
 
-                    @Override
-                    public void onPageScrollStateChanged(int state) {
-                        if (state == ViewPager.SCROLL_STATE_IDLE) {
-                            swipeRefreshLayout.setEnabled(true);
-                        } else {
-                            swipeRefreshLayout.setEnabled(false);
-                        }
-                    }
-                });
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                if (state == ViewPager.SCROLL_STATE_IDLE) {
+                    swipeRefreshLayout.setEnabled(true);
+                } else {
+                    swipeRefreshLayout.setEnabled(false);
+                }
+            }
+        });
 
         // 最終ページ（最新日付）を表示
         viewPager.setCurrentItem(pagerAdapter.getCount() - 1);
@@ -497,96 +423,5 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 Toast.makeText(MainActivity.this, "株価データの取得に失敗しました。\nしばらく時間をおいてから再度お試しください", Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-    private boolean migareteDb() {
-
-        Realm realm = Realm.getDefaultInstance();
-
-        if (realm == null) {
-            return false;
-        }
-
-        try {
-            Nk225Preference preference = Nk225Preference.getInstance(this);
-            int schemaVersion = preference.getSchemaVersion();
-
-            if (schemaVersion < 1) {
-                if (!migrateDb0To1(realm)) {
-                    return false;
-                }
-
-                preference.setSchemaVersion(1);
-            }
-
-            if (schemaVersion < 2) {
-                if (!migrateDb1To2(realm)) {
-                    return false;
-                }
-
-                preference.setSchemaVersion(2);
-            }
-        } finally {
-            realm.close();
-        }
-
-        return true;
-    }
-
-    private boolean migrateDb0To1(Realm realm) {
-
-        Log.d(TAG, "migrateDb0To1");
-
-        return true;
-    }
-
-    private boolean migrateDb1To2(Realm realm) {
-
-        Log.d(TAG, "migrateDb1To2");
-
-        try {
-            realm.beginTransaction();
-
-            SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
-
-            // 2年前の1月1日以降を再計算
-            int year = DateUtils.getYear(new Date()) - 2;
-            Date fromDate = DateUtils.convertToDate(String.valueOf(year) + "/01/01", "yyyy/MM/dd");
-            RealmResults<Candlestick> results = realm.where(Candlestick.class)
-                .greaterThan("date", fromDate)
-                .findAllSorted("date", Sort.ASCENDING);
-
-            for (int i = 0; i < results.size(); ++i) {
-
-                Date date = results.get(i).getDate();
-
-                RealmResults<Nk225Entity> nk225Entities = realm.where(Nk225Entity.class)
-                    .equalTo("date", date)
-                    .findAll();
-
-                for (int j = 0; j < nk225Entities.size(); ++j) {
-
-                    Nk225Entity nk225 = nk225Entities.get(j);
-
-                    double range = StockUtils.priceRange(date);
-                    nk225.setPriceRange(range);
-                    Log.d(TAG, fmt.format(date) + ":当日値幅 " + String.valueOf(range));
-
-                    double rangeAvg20 = StockUtils.priceRangeAverage(date, 20);
-                    nk225.setPriceRangeAverage20(rangeAvg20);
-                    Log.d(TAG, fmt.format(date) + ":20日平均値幅 " + String.valueOf(rangeAvg20));
-                }
-            }
-
-            realm.commitTransaction();
-        } catch (Exception e) {
-            realm.cancelTransaction();
-
-            Log.e(TAG, e.toString());
-
-            return false;
-        }
-
-        return true;
     }
 }

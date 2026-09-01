@@ -2,16 +2,16 @@ package com.masa34.nk225analyzer.UI;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.masa34.nk225analyzer.R;
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 
 public class Nk225Fragment extends Fragment {
     private final String TAG = "Nk225Fragment";

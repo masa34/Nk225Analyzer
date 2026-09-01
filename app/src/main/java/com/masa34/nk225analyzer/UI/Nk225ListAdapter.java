@@ -1,13 +1,13 @@
 package com.masa34.nk225analyzer.UI;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.masa34.nk225analyzer.R;
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 import com.masa34.nk225analyzer.UI.Card.BollingerBandCard;
 import com.masa34.nk225analyzer.UI.Card.ComprehensiveEvaluationCard;
 import com.masa34.nk225analyzer.UI.Card.EstrangementRateCard;

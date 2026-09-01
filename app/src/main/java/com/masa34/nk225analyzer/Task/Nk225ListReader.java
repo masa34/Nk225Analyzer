@@ -1,18 +1,16 @@
 package com.masa34.nk225analyzer.Task;
 
 import android.content.Context;
-import android.support.v4.content.AsyncTaskLoader;
+import androidx.loader.content.AsyncTaskLoader;
 import android.util.Log;
 
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.UI.Nk225AnalyzerApp;
+import com.masa34.nk225analyzer.Db.Dao.Nk225EntityDao;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-
-import io.realm.Realm;
-import io.realm.RealmResults;
-import io.realm.Sort;
 
 public class Nk225ListReader extends AsyncTaskLoader<List<Nk225Entity>> {
 

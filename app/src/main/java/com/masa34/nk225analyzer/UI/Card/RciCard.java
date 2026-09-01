@@ -2,7 +2,7 @@ package com.masa34.nk225analyzer.UI.Card;
 
 import android.graphics.Color;
 
-import com.masa34.nk225analyzer.Stock.Nk225Entity;
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
 
 public class RciCard extends Nk225CardBase {
 
