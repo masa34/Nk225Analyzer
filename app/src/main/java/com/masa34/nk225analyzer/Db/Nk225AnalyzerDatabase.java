@@ -19,7 +19,7 @@ import com.masa34.nk225analyzer.Db.Entity.MarketT1;
             MarketT1.class
         },
         version = 1,
-        exportSchema = true
+        exportSchema = false
 )
 @TypeConverters({DateConverter.class})
 public abstract class Nk225AnalyzerDatabase extends RoomDatabase {

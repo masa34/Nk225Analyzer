@@ -15,3 +15,13 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+-keep class androidx.work.** { *; }
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
+
+-keep class androidx.startup.** { *; }
+
+-keep class androidx.room.** { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+
+-keep class com.masa34.nk225analyzer.Db.** { *; }
