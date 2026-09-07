@@ -11,7 +11,7 @@ android {
         applicationId "com.masa34.nk225analyzer"
         minSdk 21
         targetSdk 36
-        versionCode 43
+        versionCode 45
         versionName "1.7.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -48,6 +48,8 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+
+    implementation "androidx.preference:preference:1.2.1"
 
     def room_version = "2.6.1"
 

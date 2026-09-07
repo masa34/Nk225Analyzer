@@ -84,6 +84,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 .setMessage("データ管理を改善しました。\r\n再ダウンロードが必要です。\r\n端末によっては時間がかかる場合があります。")
                 .show();
 
+            // 設定値を移行
+            preference.upgradePreferences(this);
+
             preference.setDownloaded(true);
         }
     }
