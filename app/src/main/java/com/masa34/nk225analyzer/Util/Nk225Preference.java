@@ -8,7 +8,7 @@ public class Nk225Preference {
 
     private static Nk225Preference instance;
 
-    private static SharedPreferences preference;
+    private SharedPreferences preference;
 
     // コンストラクタ
     private Nk225Preference() {
@@ -18,8 +18,27 @@ public class Nk225Preference {
         if (instance == null) {
             instance = new Nk225Preference();
         }
-        preference = context.getSharedPreferences("nk225_prefs", Context.MODE_PRIVATE);
+        instance.preference = context.getApplicationContext().getSharedPreferences("nk225_prefs", Context.MODE_PRIVATE);
         return instance;
+    }
+
+    // 設定値の管理方法変更に伴うデータ移行
+    public void upgradePreferences(Context context) {
+        SharedPreferences oldPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+        SharedPreferences newPrefs = preference;
+
+        // display_period の移行
+        if (!newPrefs.contains("display_period")) {
+            int oldValue = oldPrefs.getInt("display_period", 0);
+            newPrefs.edit().putString("display_period", String.valueOf(oldValue)).apply();
+        }
+
+        // auto_download の移行
+        if (!newPrefs.contains("auto_download")) {
+            boolean oldAuto = oldPrefs.getBoolean("auto_download", false);
+            newPrefs.edit().putBoolean("auto_download", oldAuto).apply();
+        }
     }
 
     // 設定値更新
@@ -30,16 +49,24 @@ public class Nk225Preference {
     }
 
     public boolean getDownloaded() {
-        return Boolean.parseBoolean(preference.getString("downloaded", "false"));
+        return preference.getBoolean("downloaded", false);
     }
 
     public void setDownloaded(boolean downloaded) {
-        UpdatePreference("downloaded", String.valueOf(downloaded));
+        SharedPreferences.Editor editor = preference.edit();
+        editor.putBoolean("downloaded", downloaded);
+        editor.apply();
     }
 
     // 自動ダウンロード
     public boolean isAutoDownload() {
         return preference.getBoolean("auto_download", false);
+    }
+
+    public void setAutoDownload(boolean enabled) {
+        SharedPreferences.Editor editor = preference.edit();
+        editor.putBoolean("auto_download", enabled);
+        editor.apply();
     }
 
     // 表示期間
