@@ -1,32 +1,53 @@
 package com.masa34.nk225analyzer.UI;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceScreen;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.ListPreference;
+import androidx.preference.CheckBoxPreference;
+import androidx.activity.OnBackPressedCallback;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
 import android.util.Log;
 import android.view.KeyEvent;
 
 import com.masa34.nk225analyzer.R;
 import com.masa34.nk225analyzer.Util.Nk225Preference;
 
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends AppCompatActivity {
 
-    int displayPeriod;
+    private int displayPeriod;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new SettingsFragment()).commit();
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(android.R.id.content, new SettingsFragment())
+                .commit();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Intent intent = new Intent();
+                intent.putExtra(
+                        "displayPeriodChanged",
+                        displayPeriod != Nk225Preference.getInstance(SettingsActivity.this).getDisplayPeriod()
+                );
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+        });
+
 
         displayPeriod = Nk225Preference.getInstance(this).getDisplayPeriod();
     }
@@ -48,30 +69,53 @@ public class SettingsActivity extends PreferenceActivity {
         return super.dispatchKeyEvent(e);
     }
 
-    public static class SettingsFragment extends PreferenceFragment implements Preference.OnPreferenceClickListener {
+    public static class SettingsFragment extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener {
 
         private final String TAG = "SettingsFragment";
 
         private Context context;
 
         @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.settings);
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.settings, rootKey);
+
+            // --- display_period の保存処理
+            ListPreference displayPeriodPref = findPreference("display_period");
+            int current = Nk225Preference.getInstance(context).getDisplayPeriod();
+            displayPeriodPref.setValue(String.valueOf(current));
+
+            displayPeriodPref.setOnPreferenceChangeListener((pref, newValue) -> {
+                int period = Integer.parseInt((String) newValue);
+                Nk225Preference.getInstance(context).setDisplayPeriod(period);
+                return true;
+            });
+
+            // --- auto_download の保存処理
+            CheckBoxPreference autoDownloadPref = findPreference("auto_download");
+            autoDownloadPref.setOnPreferenceChangeListener((pref, newValue) -> {
+                boolean enabled = (Boolean) newValue;
+                Nk225Preference.getInstance(context).setAutoDownload(enabled);
+                return true;
+            });
 
             // バージョン番号表示
-            PackageManager pm = context.getPackageManager();
+            PreferenceScreen version = findPreference("version");
             try {
-                PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
-                PreferenceScreen version = (PreferenceScreen)getPreferenceScreen().findPreference("version");
-                version.setSummary(packageInfo.versionName);
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.e(TAG, e.toString());
-            }
+                PackageInfo info = context.getPackageManager()
+                        .getPackageInfo(context.getPackageName(), 0);
+                version.setSummary(info.versionName);
+            } catch (Exception ignored) {}
 
             // プライバシーポリシー
-            PreferenceScreen privacy_policy = (PreferenceScreen) findPreference("privacy_policy");
-            privacy_policy.setOnPreferenceClickListener(this);
+            PreferenceScreen privacy = findPreference("privacy_policy");
+            privacy.setOnPreferenceClickListener(this);
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View v = super.onCreateView(inflater, container, savedInstanceState);
+            v.setFitsSystemWindows(true);
+            return v;
         }
 
         @Override
@@ -80,18 +124,6 @@ public class SettingsActivity extends PreferenceActivity {
             Log.d(TAG, "onAttach");
 
             this.context = context;
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            Log.d(TAG, "onAttach(Activity)");
-
-            // Android 6.0未満ではActivityを引数にしたonAttachしか呼ばれないようだ
-            // Android 6.0以降では両方のonAttachが呼ばれる
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                this.context = activity.getApplicationContext();
-            }
         }
 
         @Override

@@ -3,12 +3,13 @@ package com.masa34.nk225analyzer.UI;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
-import androidx.viewpager.widget.PagerTabStrip;
+import androidx.viewpager.widget.PagerTitleStrip;
 import androidx.viewpager.widget.ViewPager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.AlertDialog;
@@ -64,8 +65,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         swipeRefreshLayout.setColorSchemeResources(R.color.red, R.color.green, R.color.blue, R.color.orange);
         swipeRefreshLayout.setOnRefreshListener(this);
 
-        PagerTabStrip pagerTabStrip = findViewById(R.id.tab_strip);
-        pagerTabStrip.setVisibility(View.INVISIBLE);
+        PagerTitleStrip pagerTitleStrip = findViewById(R.id.tab_strip);
+        pagerTitleStrip.setVisibility(View.INVISIBLE);
 
         // 広告初期化
         MobileAds.initialize(this);
@@ -83,6 +84,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 .setTitle("お知らせ")
                 .setMessage("データ管理を改善しました。\r\n再ダウンロードが必要です。\r\n端末によっては時間がかかる場合があります。")
                 .show();
+
+            // 設定値を移行
+            preference.upgradePreferences(this);
 
             preference.setDownloaded(true);
         }
@@ -320,13 +324,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         // 最終ページ（最新日付）を表示
         viewPager.setCurrentItem(pagerAdapter.getCount() - 1);
 
-        PagerTabStrip pagerTabStrip = (PagerTabStrip) findViewById(R.id.tab_strip);
+        PagerTitleStrip pagerTitleStrip = findViewById(R.id.tab_strip);
         if (data.isEmpty()) {
-            pagerTabStrip.setVisibility(View.INVISIBLE);
+            pagerTitleStrip.setVisibility(View.INVISIBLE);
         } else {
-            pagerTabStrip.setDrawFullUnderline(true);
-            pagerTabStrip.setTabIndicatorColor(Color.DKGRAY);
-            pagerTabStrip.setVisibility(View.VISIBLE);
+            pagerTitleStrip.setVisibility(View.VISIBLE);
         }
     }
 

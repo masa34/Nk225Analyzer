@@ -400,14 +400,14 @@ public class Nk225Downloader extends AsyncTask<Void, Void, Boolean> {
                 nk225.setPsychological(psycho);
                 Log.d(TAG, fmt.format(date) + ":Psychological(12) " + String.valueOf(psycho));
 
-                Date losersDate = date;
-                if (!marketClosing) {
-                    // 騰落レシオが計算できるのは引け後、場中は前日の騰落レシオで代用
-                    losersDate = MarketCalendar.getLastBussinessDay(date);
-                }
-                double losersRatio = StockUtils.losersRatio(losersDate, 25);
-                nk225.setLosersRatio(losersRatio);
-                Log.d(TAG, fmt.format(losersDate) + ":騰落レシオ(25) " + String.valueOf(losersRatio));
+//                Date losersDate = date;
+//                if (!marketClosing) {
+//                    // 騰落レシオが計算できるのは引け後、場中は前日の騰落レシオで代用
+//                    losersDate = MarketCalendar.getLastBussinessDay(date);
+//                }
+//                double losersRatio = StockUtils.losersRatio(losersDate, 25);
+//                nk225.setLosersRatio(losersRatio);
+//                Log.d(TAG, fmt.format(losersDate) + ":騰落レシオ(25) " + String.valueOf(losersRatio));
 
                 nk225.setMarketClosing(marketClosing);
 
