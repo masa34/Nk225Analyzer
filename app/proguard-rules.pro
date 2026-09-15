@@ -25,3 +25,5 @@
 -keep class * extends androidx.room.RoomDatabase { *; }
 
 -keep class com.masa34.nk225analyzer.Db.** { *; }
+-keep class com.masa34.nk225analyzer.Util.Nk225Preference { *; }
+-keep class com.masa34.nk225analyzer.Util.** { *; }
