@@ -11,6 +11,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.ListPreference;
 import androidx.preference.CheckBoxPreference;
+import androidx.activity.OnBackPressedCallback;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +24,7 @@ import com.masa34.nk225analyzer.Util.Nk225Preference;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    int displayPeriod;
+    private int displayPeriod;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -33,6 +34,20 @@ public class SettingsActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Intent intent = new Intent();
+                intent.putExtra(
+                        "displayPeriodChanged",
+                        displayPeriod != Nk225Preference.getInstance(SettingsActivity.this).getDisplayPeriod()
+                );
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+        });
+
 
         displayPeriod = Nk225Preference.getInstance(this).getDisplayPeriod();
     }
