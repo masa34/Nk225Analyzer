@@ -11,17 +11,17 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp">
+        android:layout_height="66dp">
 
         <TextView
             android:id="@+id/title"
             android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_height="wrap_content"
             android:background="@color/colorPrimary"
-            android:text="Title"
             android:gravity="center_vertical"
+            android:text="Title"
             android:textColor="@android:color/white"
-            android:textSize="14dp" />
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/subTitle1"
@@ -29,9 +29,9 @@
             android:layout_height="wrap_content"
             android:text="subTitle1"
             android:gravity="center_vertical"
-            android:textSize="10dp"
+            android:textSize="12sp"
             android:layout_below="@id/title"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="6dp"
             android:layout_marginLeft="5dp"/>
 
         <TextView
@@ -39,7 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Value1"
-            android:textSize="10dp"
+            android:textSize="12sp"
             android:layout_marginLeft="30dp"
             android:layout_marginStart="30dp"
             android:layout_alignBaseline="@+id/subTitle1"
@@ -52,7 +52,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Value2"
-            android:textSize="10dp"
+            android:textSize="12sp"
             android:layout_alignBaseline="@+id/subTitle2"
             android:layout_alignBottom="@+id/subTitle2"
             android:layout_alignLeft="@+id/value1"
@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:text="subTitle2"
             android:gravity="center_vertical"
-            android:textSize="10dp"
+            android:textSize="12sp"
             android:layout_below="@+id/subTitle1"
             android:layout_alignLeft="@+id/subTitle1"
             android:layout_alignStart="@+id/subTitle1" />

@@ -11,17 +11,17 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="52dp">
+        android:layout_height="54dp">
 
         <TextView
             android:id="@+id/title"
             android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_height="wrap_content"
             android:background="@color/colorPrimary"
-            android:text="Title"
             android:gravity="center_vertical"
+            android:text="Title"
             android:textColor="@android:color/white"
-            android:textSize="14dp" />
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/subTitle1"
@@ -29,9 +29,9 @@
             android:layout_height="wrap_content"
             android:text="Value"
             android:gravity="center_vertical"
-            android:textSize="10dp"
+            android:textSize="12sp"
             android:layout_below="@id/title"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="6dp"
             android:layout_marginLeft="5dp"/>
 
     </RelativeLayout>
