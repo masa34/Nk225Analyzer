@@ -8,3 +8,4 @@ local.properties
 /captures
 .externalNativeBuild
 app/release/
+*.jks
