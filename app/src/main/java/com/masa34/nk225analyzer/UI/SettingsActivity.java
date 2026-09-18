@@ -137,7 +137,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             switch (preference.getKey()) {
                 case "privacy_policy":
-                    Uri uri = Uri.parse("http://masapu.cocolog-nifty.com/kabu/2018/09/post-80a7.html");
+                    Uri uri = Uri.parse("https://masa34.github.io/Nk225Analyzer/privacy-policy.html");
                     Intent i = new Intent(Intent.ACTION_VIEW, uri);
                     startActivity(i);
                     break;
