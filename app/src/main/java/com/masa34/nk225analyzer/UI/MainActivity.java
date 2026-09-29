@@ -3,8 +3,6 @@ package com.masa34.nk225analyzer.UI;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.loader.app.LoaderManager;
@@ -15,6 +13,9 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.EdgeToEdge;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -57,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_main);
+
+        EdgeToEdge.enable(this);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -235,19 +238,63 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         return true;
     }
 
-    @Override
+    // チャート画面から「タップされた日付」を受け取るためのランチャー
+    private final ActivityResultLauncher<Intent> chartLauncher = registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                String selectedDate = result.getData().getStringExtra("SELECTED_DATE");
+                if (selectedDate != null) {
+                    // 【ここにタブを切り替える処理を記述】
+                    switchToTabByDate(selectedDate);
+                }
+            }
+        }
+    );
+
+    private final ActivityResultLauncher<Intent> settingLauncher = registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                if (result.getData().getBooleanExtra("displayPeriodChanged", false)) {
+                    // 表示期間が変更された
+                    needReflesh = true;
+                }
+            }
+        }
+    );
+
+    // チャートから選ばれた日付にタブを合わせるメソッド
+    private void switchToTabByDate(String dateStr) {
+        // 例: dateStr（"2026-06-01"など）を元に、一致するタブのインデックスを探してアクティブにする
+        // 導入されているタブレイアウトの実装に合わせて記述してください
+        // 
+        // 記述例:
+        // viewPager.setCurrentItem(matchedTabIndex);
+    }
+
+	@Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.d(TAG, "onOptionsItemSelected");
 
         int id = item.getItemId();
 
-        if (id == R.id.action_download) {
+        if (id == R.id.action_chart) {
+            if (pagerAdapter == null || pagerAdapter.isDataDownloaded()) {
+                Toast.makeText(MainActivity.this, "データがダウンロードされていません", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+
+            Intent intent = new Intent(MainActivity.this, ChartActivity.class);
+            chartLauncher.launch(intent);
+            return true;
+        } else if (id == R.id.action_download) {
             downloader = new ManualNk225DownloadProcess();
             downloader.execute();
             return true;
         } else if (id == R.id.action_settings) {
-            Intent intent = new android.content.Intent(this, SettingsActivity.class);
-            startActivityForResult(intent, REQUEST_CODE);
+            Intent intent = new Intent(this, SettingsActivity.class);
+            settingLauncher.launch(intent);
             return true;
         } else if (id == R.id.action_db_init) {
             // RDB初期化
@@ -337,29 +384,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         Log.d(TAG, "onLoaderReset");
 
         // 今回は無視する
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            //SecondActivityから戻ってきた場合
-            case (REQUEST_CODE):
-                if (resultCode == RESULT_OK) {
-                    //OKボタンを押して戻ってきたときの処理
-                    if (data.getBooleanExtra("displayPeriodChanged", false)) {
-                        // 表示期間が変更された
-                        needReflesh = true;
-                    }
-                } else if (resultCode == RESULT_CANCELED) {
-                    //キャンセルボタンを押して戻ってきたときの処理
-                } else {
-                    //その他
-                }
-                break;
-
-            default:
-                break;
-        }
     }
 
     // 以下ダウンロード関連処理

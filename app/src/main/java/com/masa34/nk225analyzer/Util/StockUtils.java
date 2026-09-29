@@ -1,11 +1,16 @@
 package com.masa34.nk225analyzer.Util;
 
-import com.masa34.nk225analyzer.Db.Dao.MarketT1Dao;
+import android.graphics.Color;
+
+import com.masa34.nk225analyzer.Db.Entity.Nk225Entity;
+import com.masa34.nk225analyzer.R;
 import com.masa34.nk225analyzer.UI.Nk225AnalyzerApp;
+import com.masa34.nk225analyzer.Db.Dao.MarketT1Dao;
 import com.masa34.nk225analyzer.Db.Dao.CandlestickDao;
 import com.masa34.nk225analyzer.Db.Entity.Candlestick;
 import com.masa34.nk225analyzer.Db.Entity.MarketT1;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -303,5 +308,97 @@ public class StockUtils {
         }
 
         return (double) advances / decliners * 100.0;
+    }
+
+    // ------------------------------
+    // 評価ステータス（割安・割高・底・天井・中立）
+    // ------------------------------
+    public enum StockStatus {
+        CHEAP,      // 割安
+        EXPENSIVE,  // 割高
+        BOTTOM,     // 底
+        TOP,        // 天井
+        NEUTRAL     // 中立
+    }
+
+    // ------------------------------
+    // 評価結果クラス
+    // ------------------------------
+    public static class StockEvaluationResult {
+        public StockStatus status;   // 評価ステータス
+        public double score;            // 0〜100 のスコア
+
+        public StockEvaluationResult(StockStatus status, double score) {
+            this.status = status;
+            this.score = score;
+        }
+    }
+
+    private static double calcBollingerBandScore(Nk225Entity entity) {
+        double hBand = entity.getMovingAverage25() + 2.2 * entity.getStandardDeviation25();
+        double lBand = entity.getMovingAverage25() - 2.2 * entity.getStandardDeviation25();
+        return (entity.getValue() - lBand) / (hBand - lBand) * 100.0;
+    }
+
+    private static double calcEstrangementRateScore(Nk225Entity entity) {
+        double hRate = 3.5;
+        double lRate = -3.5;
+        double estrangementRate = (entity.getValue() - entity.getMovingAverage25()) / entity.getMovingAverage25() * 100.0;
+        return (estrangementRate - lRate) / (hRate - lRate) * 100.0;
+    }
+
+    private static double calcLosersRatioScore(Nk225Entity entity) {
+        double hRatio = 146.0;
+        double lRatio = 54.0;
+        double losersRatio = entity.getLosersRatio();
+        return (losersRatio - lRatio) / (hRatio - lRatio) * 100.0;
+    }
+
+    private static double calcPsychologicalScore(Nk225Entity entity) {
+        return entity.getPsychological();
+    }
+
+    private static double calcRsiScore(Nk225Entity entity) {
+        return entity.getRsi();
+    }
+
+    private static double calcRciScore(Nk225Entity entity) {
+        double hRci = 100.0;
+        double lRci = -100.0;
+        double rci = entity.getRci();
+        return (rci - lRci) / (hRci - lRci) * 100.0;
+    }
+
+    public static StockEvaluationResult getStockEvaluation(Nk225Entity entity) {
+        List<Double> scores = new ArrayList<>();
+        scores.add(calcBollingerBandScore(entity));
+        scores.add(calcEstrangementRateScore(entity));
+        scores.add(calcPsychologicalScore(entity));
+        scores.add(calcRsiScore(entity));
+        scores.add(calcRciScore(entity));
+        //scores.add(calcLosersRatioScore(entity));
+
+        double totalScore = 0.0;
+        for (Double score : scores) {
+            totalScore += score;
+        }
+
+        double score = totalScore / scores.size();
+
+        StockStatus status;
+
+        if (score >= 87.5) {
+            status = StockStatus.TOP;
+        } else if (score >= 75.0) {
+            status = StockStatus.EXPENSIVE;
+        } else if (score <= 12.5) {
+            status = StockStatus.BOTTOM;
+        } else if (score <= 25.0) {
+            status = StockStatus.CHEAP;
+        } else {
+            status = StockStatus.NEUTRAL;
+        }
+
+        return new StockEvaluationResult(status, score);
     }
 }

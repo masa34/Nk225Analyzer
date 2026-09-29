@@ -2,6 +2,7 @@
     <string name="app_name">日経平均あならいざ～</string>
     <string name="action_settings">設定</string>
     <string name="action_download">ダウンロード</string>
+    <string name="action_chart">チャート</string>
     <string name="action_db_init">DB初期化</string>
     <string name="nk225_day_url">http://k-db.com/indices/I101/1d/</string>
     <string name="t1_url">http://k-db.com/statistics/T1/</string>

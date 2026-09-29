@@ -33,7 +33,7 @@ public class Nk225PagerAdapter extends FragmentStatePagerAdapter {
         Log.d(TAG, "getItem");
 
         if (nk225Entities.isEmpty()) {
-            return  new EmptyFragment();
+            return new EmptyFragment();
         }
 
         Nk225Fragment fragment = new Nk225Fragment();
@@ -71,4 +71,6 @@ public class Nk225PagerAdapter extends FragmentStatePagerAdapter {
     public final int getItemPosition(Object object) {
         return POSITION_NONE;
     }
+
+    public boolean isDataDownloaded() { return nk225Entities.isEmpty(); }
 }

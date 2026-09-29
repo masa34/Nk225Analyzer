@@ -5,10 +5,6 @@ import androidx.room.PrimaryKey;
 
 import java.util.Date;
 
-//import io.realm.RealmObject;
-//import io.realm.annotations.Index;
-//import io.realm.annotations.PrimaryKey;
-
 @Entity(tableName = "candlestick")
 public class Candlestick {
     @PrimaryKey(autoGenerate = true)
