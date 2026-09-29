@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="lightweight-charts-v4.js"></script>
+    <style>
+        body { margin: 0; padding: 0; background-color: #131722; }
+        #chart { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="chart"></div>
+    <script>
+        const chartElement = document.getElementById('chart');
+
+        // --- チャート作成（v4 正式 API） ---
+        const chart = LightweightCharts.createChart(
+            chartElement,
+            {
+                layout: {
+                    background: { type: 'solid', color: '#131722' },
+                    textColor: '#d1d4dc',
+                },
+                grid: {
+                    vertLines: { color: '#2B2B43' },
+                    horzLines: { color: '#2B2B43' },
+                },
+                timeScale: {
+                    timeVisible: true,
+                    handleScale: true,
+                },
+            }
+        );
+
+        window._lwChart = chart;
+
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+        }, 0);
+
+        // 5日移動平均線
+        const ma5Series = chart.addLineSeries({
+            color: 'lime',
+            lineWidth: 1,
+        }, 0);
+
+        // 25日移動平均線
+        const ma25Series = chart.addLineSeries({
+            color: 'red',
+            lineWidth: 1,
+        }, 0);
+
+        // Android に「チャート準備完了」を通知
+        if (window.AndroidBridge && window.AndroidBridge.onChartReady) {
+            window.AndroidBridge.onChartReady();
+        }
+
+        // --- 足をタップしたときのイベント
+        chart.subscribeClick((param) => {
+            if (!param.time) return;
+
+            let selectedDate = param.time;
+            if (typeof selectedDate === 'object') {
+                let y = selectedDate.year;
+                let m = String(selectedDate.month).padStart(2, '0');
+                let d = String(selectedDate.day).padStart(2, '0');
+                selectedDate = `${y}-${m}-${d}`;
+            }
+            //if (window.AndroidBridge) {
+            //    window.AndroidBridge.onCandleClicked(selectedDate);
+            //}
+        });
+
+        // Javaからデータを受け取って描画
+        function setChartData(stocksJson, markersJson, ma5Json, ma25Json) {
+            try {
+                console.log("stocks:", JSON.parse(stocksJson));
+                console.log("markers:", JSON.parse(markersJson));
+                console.log("ma5:", JSON.parse(ma5Json));
+                console.log("ma25:", JSON.parse(ma25Json));
+
+                let data = typeof stocksJson === 'string'
+                    ? JSON.parse(stocksJson)
+                    : stocksJson;
+
+                if (data) {
+                    candleSeries.setData(data);
+                }
+
+                if (markersJson) {
+                    let markers = typeof markersJson === 'string'
+                        ? JSON.parse(markersJson)
+                        : markersJson;
+                    candleSeries.setMarkers(markers);
+                }
+
+                if (ma5Json) {
+                    let ma5 = typeof ma5Json === 'string'
+                        ? JSON.parse(ma5Json)
+                        : ma5Json;
+
+                    ma5Series.setData(ma5);
+                }
+
+                if (ma25Json) {
+                    let ma25 = typeof ma25Json === 'string'
+                        ? JSON.parse(ma25Json)
+                        : ma25Json;
+
+                    ma25Series.setData(ma25);
+                }
+
+                // --- 初期表示を直近の約3ヶ月分（約65本分）に設定 ---
+                const dataLength = data ? data.length : 0;
+                if (dataLength > 0) {
+                    const visibleBars = 65; // 3ヶ月分の目安本数（営業日数ベース）
+                    const from = Math.max(0, dataLength - visibleBars);
+                    const to = dataLength - 1;
+                    
+                    chart.timeScale().setVisibleLogicalRange({ from: from, to: to });
+                } else {
+                    chart.timeScale().fitContent();
+                }
+            } catch (e) {
+                console.error("Chart Error: ", e);
+            }
+        }
+    </script>
+</body>
+</html>
