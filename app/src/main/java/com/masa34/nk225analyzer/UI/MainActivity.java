@@ -16,6 +16,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.EdgeToEdge;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -76,6 +79,47 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         adView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
+
+        View containerView = findViewById(R.id.coordinator_layout);
+        if (containerView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(containerView, (v, windowInsets) -> {
+                Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+                View appBarLayout = findViewById(R.id.app_bar_layout);
+                View adContainer = findViewById(R.id.ad_container);
+
+                // 1. 上部（ステータスバー）のPaddingをAppBarLayoutに設定
+                appBarLayout.setPadding(
+                    appBarLayout.getPaddingLeft(),
+                    systemBars.top,
+                    appBarLayout.getPaddingRight(),
+                    appBarLayout.getPaddingBottom()
+                );
+
+                // 2. 下部（ナビゲーションバー）のPaddingを広告コンテナに設定
+                adContainer.setPadding(
+                    adContainer.getPaddingLeft(),
+                    adContainer.getPaddingTop(),
+                    adContainer.getPaddingRight(),
+                    systemBars.bottom
+                );
+
+                // 3. スクロール領域（SwipeRefreshLayout）の下部Paddingを調整
+                // コンテナ全体の高さ（広告本体の高さ + ナビゲーションバーの高さ）分の余白を空ける
+                adContainer.post(() -> {
+                    swipeRefreshLayout.setPadding(
+                        swipeRefreshLayout.getPaddingLeft(),
+                        swipeRefreshLayout.getPaddingTop(),
+                        swipeRefreshLayout.getPaddingRight(),
+                        adContainer.getHeight()
+                    );
+
+                    swipeRefreshLayout.requestLayout();
+                });
+
+                return windowInsets;
+            });
+        }
 
         isStartup = true;
         needReflesh = false;
