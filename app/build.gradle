@@ -15,8 +15,8 @@ android {
         applicationId "com.masa34.nk225analyzer"
         minSdk 21
         targetSdk 36
-        versionCode 92
-        versionName "2.1.0"
+        versionCode 96
+        versionName "2.1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
