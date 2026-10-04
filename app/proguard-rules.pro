@@ -27,3 +27,10 @@
 -keep class com.masa34.nk225analyzer.Db.** { *; }
 -keep class com.masa34.nk225analyzer.Util.Nk225Preference { *; }
 -keep class com.masa34.nk225analyzer.Util.** { *; }
+
+-keep class com.tradingview.lightweightcharts.** { public protected private *; }
+
+-keepattributes *Annotation*,Signature,EnclosingMethod,InnerClasses
+-keepclassmembers class * {
+    @com.fasterxml.jackson.annotation.* *;
+}
