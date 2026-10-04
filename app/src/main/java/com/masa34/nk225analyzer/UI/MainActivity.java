@@ -84,9 +84,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         if (containerView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(containerView, (v, windowInsets) -> {
                 Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                Insets navBarInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
 
                 View appBarLayout = findViewById(R.id.app_bar_layout);
                 View adContainer = findViewById(R.id.ad_container);
+                View pager = findViewById(R.id.pager);
 
                 // 1. 上部（ステータスバー）のPaddingをAppBarLayoutに設定
                 appBarLayout.setPadding(
@@ -101,20 +103,20 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     adContainer.getPaddingLeft(),
                     adContainer.getPaddingTop(),
                     adContainer.getPaddingRight(),
-                    systemBars.bottom
+                    navBarInsets.bottom
                 );
 
-                // 3. スクロール領域（SwipeRefreshLayout）の下部Paddingを調整
-                // コンテナ全体の高さ（広告本体の高さ + ナビゲーションバーの高さ）分の余白を空ける
+                // 3. 広告コンテナのサイズが確定した（または変わった）タイミングでパディングを設定する
                 adContainer.post(() -> {
-                    swipeRefreshLayout.setPadding(
-                        swipeRefreshLayout.getPaddingLeft(),
-                        swipeRefreshLayout.getPaddingTop(),
-                        swipeRefreshLayout.getPaddingRight(),
-                        adContainer.getHeight()
-                    );
+                    // これで wrap_content であっても、実際に描画される高さをピクセルで取得できます
+                    int actualAdContainerHeight = adContainer.getHeight();
 
-                    swipeRefreshLayout.requestLayout();
+                    pager.setPadding(
+                        pager.getPaddingLeft(),
+                        pager.getPaddingTop(),
+                        pager.getPaddingRight(),
+                        actualAdContainerHeight // すでにナビゲーションバーのパディングも内包したコンテナ全体の高さ
+                    );
                 });
 
                 return windowInsets;
