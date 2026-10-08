@@ -52,15 +52,5 @@ public class ComprehensiveEvaluationCard extends Nk225CardBase {
                 evaluationHholder.setEvaluationBackground(R.drawable.style_bottom);
                 break;
         }
-
-        String updated = "";
-        if (!entity.getMarketClosing()) {
-            try {
-                // ※騰落レシオを計算するための情報が取得できなくなったため暫定対応とする
-                //updated = new SimpleDateFormat("Hmm更新").format(entity.getDate());
-            } catch (NumberFormatException e) {
-            }
-        }
-        evaluationHholder.setUpdated(updated);
     }
 }
