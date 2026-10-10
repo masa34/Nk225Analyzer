@@ -13,13 +13,13 @@
         android:entryValues="@array/display_period_values"
         android:dialogTitle="表示期間指定" />
 
-    <PreferenceScreen
+    <Preference
         android:key="privacy_policy"
         android:title="プライバシーポリシー">
-    </PreferenceScreen>
+    </Preference>
 
-    <PreferenceScreen
+    <Preference
         android:key="version"
         android:title="@string/setting_version">
-    </PreferenceScreen>
+    </Preference>
 </PreferenceScreen>
