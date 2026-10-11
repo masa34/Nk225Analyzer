@@ -19,15 +19,22 @@ import androidx.activity.EdgeToEdge;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 
 import com.masa34.nk225analyzer.R;
@@ -76,9 +83,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // 広告初期化
         MobileAds.initialize(this);
-        adView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
+        loadBannerAd(this, findViewById(R.id.ad_container), getString(R.string.banner_ad_unit_id));
 
         View containerView = findViewById(R.id.coordinator_layout);
         if (containerView != null) {
@@ -282,6 +287,39 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         Log.d(TAG, "onCreateOptionsMenu");
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    private void loadBannerAd(Context context, FrameLayout adContainer, String adUnitId) {
+        // 画面幅（dp）の取得
+        DisplayMetrics outMetrics = new DisplayMetrics();
+        // Context経由で WindowManager を取得
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        windowManager.getDefaultDisplay().getMetrics(outMetrics);
+
+        int adWidth = (int) (outMetrics.widthPixels / outMetrics.density);
+
+        // アダプティブバナーのサイズを生成
+        AdSize adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, adWidth);
+
+        // AdViewの初期化と設定
+        adView = new AdView(context);
+        adView.setAdUnitId(adUnitId);
+        adView.setAdSize(adSize);
+
+        // 高さをピクセルに変換してレイアウトパラメータを設定
+        int heightPixels = adSize.getHeightInPixels(context);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                heightPixels
+        );
+        adView.setLayoutParams(params);
+
+        // コンテナにビューを追加して広告をロード
+        adContainer.removeAllViews();
+        adContainer.addView(adView);
+
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
     }
 
     // チャート画面から「タップされた日付」を受け取るためのランチャー
